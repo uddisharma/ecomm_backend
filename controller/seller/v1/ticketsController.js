@@ -17,6 +17,21 @@ exports.addTicket = async (req, res) => {
   }
 };
 
+exports.updateTicket = async (req, res) => {
+  try {
+    const updatedTicket = await Tickets.findByIdAndUpdate(
+      req.params?.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
+    return res.success({ data: updatedTicket });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 exports.ticketReply = async (req, res) => {
   try {
     const { ticketId, from, message, time } = req.body;

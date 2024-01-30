@@ -88,4 +88,9 @@ router
     orderController.deleteManyOrder
   );
 
+router.get(
+  "/admin/order/user/:customerId",
+  orderController.getAllOrdersByUser
+);
+
 module.exports = router;

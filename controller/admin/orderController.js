@@ -137,6 +137,36 @@ const findAllOrder = async (req, res) => {
  * @param {Object} res : response contains document retrieved from table.
  * @return {Object} : found Order. {status, message, data}
  */
+
+const getAllOrdersByUser = async (req, res) => {
+  const customerId = req.params.customerId;
+  try {
+    const customer = await Order.find({ customerId });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const orders = await Order.find({ customerId })
+      // .populate("customerId", ["firstName", "lastName", "email"])
+      .populate("sellerId", ["shopname", "username"])
+      .populate({
+        path: "orderItems",
+        populate: {
+          path: "productId",
+          model: "product",
+          select: ["name", "images", "price"],
+        },
+      })
+      .exec();
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 const getOrder = async (req, res) => {
   try {
     let query = {};
@@ -423,4 +453,5 @@ module.exports = {
   deleteOrder,
   deleteManyOrder,
   softDeleteManyOrder,
+  getAllOrdersByUser
 };
