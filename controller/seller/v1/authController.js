@@ -123,6 +123,7 @@ const login = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   const params = req.body;
+  // return res.send(req.body);
   try {
     if (!params.email) {
       return res.badRequest({
@@ -132,8 +133,9 @@ const forgotPassword = async (req, res) => {
     let where = { email: params.email };
     where.isActive = true;
     where.isDeleted = false;
-    params.email = params.email.toString().toLowerCase();
-    let found = await dbService.findOne(User, where);
+    // params.email = params.email.toString().toLowerCase();
+    let found = await User.findOne({ email: req.body.email });
+
     if (!found) {
       return res.recordNotFound();
     }
@@ -188,6 +190,7 @@ const validateResetPasswordOtp = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const params = req.body;
+  // return res.send(params);
   try {
     if (!params.code || !params.newPassword) {
       return res.badRequest({
@@ -200,7 +203,10 @@ const resetPassword = async (req, res) => {
       isActive: true,
       isDeleted: false,
     };
-    let found = await dbService.findOne(User, where);
+    // let found = await dbService.findOne(User, where);
+    let found = await User?.findOne({
+      "resetPasswordLink.code": params?.code,
+    });
     if (!found || !found.resetPasswordLink.expireTime) {
       return res.failure({ message: "Invalid Code" });
     }

@@ -18,6 +18,8 @@ mongoosePaginate.paginate.options = { customLabels: myCustomLabels };
 const Schema = mongoose.Schema;
 const schema = new Schema(
   {
+    //step-1
+
     shopname: { type: String },
 
     username: { type: String },
@@ -34,7 +36,65 @@ const schema = new Schema(
 
     description: { type: String },
 
-    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    //step-2
+
+    shopaddress: {
+      _id: false,
+      pincode: { type: String },
+      address1: { type: String },
+      address2: { type: String },
+      landmark: { type: String },
+      city: { type: String },
+      state: { type: String },
+    },
+
+    //step-3
+
+    sellingCategory: [
+      {
+        _id: false,
+        category: {
+          type: Schema.Types.ObjectId,
+          ref: "category",
+        },
+        photo: {
+          type: String,
+        },
+      },
+    ],
+
+    discount: {
+      type: String,
+    },
+
+    //step-4
+
+    socialLinks: {
+      instagram: { type: String },
+      facebook: { type: String },
+      youtube: { type: String },
+    },
+
+    //step-5
+
+    owner: {
+      personal: {
+        name: { type: String },
+        phone: { type: String },
+        email: { type: String },
+      },
+      address: {
+        _id: false,
+        pincode: { type: String },
+        address1: { type: String },
+        address2: { type: String },
+        landmark: { type: String },
+        city: { type: String },
+        state: { type: String },
+      },
+    },
+
+    //step-6
 
     legal: {
       aadhar: {
@@ -67,21 +127,11 @@ const schema = new Schema(
       taxid: { type: String },
 
       certificate: [{ type: String }],
+
+      signed: { type: Boolean },
     },
 
-    charge: {
-      type: String,
-    },
-
-    shopaddress: {
-      _id: false,
-      pincode: { type: String },
-      address1: { type: String },
-      address2: { type: String },
-      landmark: { type: String },
-      city: { type: String },
-      state: { type: String },
-    },
+    //step-7-final-step
 
     deliverypartner: {
       personal: {
@@ -110,30 +160,18 @@ const schema = new Schema(
         },
       },
     },
-    sellingCategory: [
-      {
-        _id: false,
-        category: {
-          type: Schema.Types.ObjectId,
-          ref: "category",
-        },
-        photo: {
-          type: String,
-        },
-      },
-    ],
+
+    //for internal use
+
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+
     rating: {
       rate: String,
       total: String,
     },
-    discount: {
-      type: String,
-    },
 
-    socialLinks: {
-      instagram: { type: String },
-      facebook: { type: String },
-      youtube: { type: String },
+    charge: {
+      type: String,
     },
 
     resetPasswordLink: {
@@ -141,22 +179,6 @@ const schema = new Schema(
       expireTime: Date,
     },
 
-    owner: {
-      personal: {
-        name: { type: String },
-        phone: { type: String },
-        email: { type: String },
-      },
-      address: {
-        _id: false,
-        pincode: { type: String },
-        address1: { type: String },
-        address2: { type: String },
-        landmark: { type: String },
-        city: { type: String },
-        state: { type: String },
-      },
-    },
     isActive: {
       type: Boolean,
       default: false,
@@ -171,7 +193,7 @@ const schema = new Schema(
 );
 schema.pre("save", async function (next) {
   this.isDeleted = false;
-  this.isActive = true;
+  this.isActive = false;
   // if (this.password) {
   //   this.password = await bcrypt.hash(this.password, 8);
   // }

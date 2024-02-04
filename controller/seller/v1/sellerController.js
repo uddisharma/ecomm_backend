@@ -13,7 +13,7 @@ const auth = require("../../../services/sellerauth");
 
 const addSeller = async (req, res) => {
   try {
-    let dataToCreate = { ...(req.body || {}) };
+    let dataToCreate = { ...({ ...req.body } || {}) };
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       userSchemaKey.schemaKeys
@@ -22,6 +22,22 @@ const addSeller = async (req, res) => {
       return res.validationError({
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
+    }
+    let exist = await Seller.findOne({ email: req.body?.email });
+
+    if (exist) {
+      return res.json({
+        data: { status: "EXIST", message: "Seller already exists." },
+      });
+    }
+
+    if (!exist) {
+      let username = await Seller.findOne({ username: req.body?.username });
+      if (username) {
+        return res.json({
+          data: { status: "USERNAME", message: "Username already taken !" },
+        });
+      }
     }
 
     dataToCreate = new Seller(dataToCreate);
@@ -320,6 +336,7 @@ const getSellerCount = async (req, res) => {
 
 const updateSeller = async (req, res) => {
   try {
+    // return res?.send(req.body);
     let dataToUpdate = {
       ...req.body,
     };
@@ -344,6 +361,7 @@ const updateSeller = async (req, res) => {
         },
       },
     });
+
     return res.success({ data: seller });
   } catch (error) {
     return res.internalServerError({ message: error.message });

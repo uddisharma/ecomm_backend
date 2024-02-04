@@ -267,6 +267,7 @@ const changePassword = async (params) => {
 const sendResetPasswordNotification = async (user) => {
   let resultOfEmail = false;
   let resultOfSMS = false;
+
   try {
     let where = {
       _id: user.id,
@@ -278,7 +279,13 @@ const sendResetPasswordNotification = async (user) => {
     expires = expires
       .add(FORGOT_PASSWORD_WITH.EXPIRE_TIME, "minute")
       .toISOString();
-    await dbService.updateOne(User, where, {
+    // await dbService.updateOne(User, where, {
+    //   resetPasswordLink: {
+    //     code: token,
+    //     expireTime: expires,
+    //   },
+    // });
+    await User?.findByIdAndUpdate(user.id, {
       resetPasswordLink: {
         code: token,
         expireTime: expires,
@@ -292,7 +299,7 @@ const sendResetPasswordNotification = async (user) => {
         template: "/views/email/ResetPassword",
         data: {
           userName: user.username || "-",
-          link: `http://localhost:${3000}/auth` + viewType + token,
+          link: `http://localhost:${3000}` + viewType + token,
           linkText: "Reset Password",
         },
       };
@@ -305,7 +312,7 @@ const sendResetPasswordNotification = async (user) => {
     }
     if (FORGOT_PASSWORD_WITH.LINK.sms) {
       let viewType = "/reset-password/";
-      let link = `http://localhost:${process.env.PORT}${viewType + token}`;
+      let link = `http://localhost:${3000}${viewType + token}`;
       const msg = await ejs.renderFile(
         `${__basedir}/views/sms/ResetPassword/html.ejs`,
         { link: link }
@@ -338,12 +345,14 @@ const sendResetPasswordNotification = async (user) => {
  */
 const resetPassword = async (user, newPassword) => {
   try {
+    // console.log(user?.shopname);
     let where = {
       _id: user.id,
       isActive: true,
       isDeleted: false,
     };
-    const dbUser = await dbService.findOne(User, where);
+    // const dbUser = await dbService.findOne(User, where);
+    const dbUser = await User?.findById(user.id);
     if (!dbUser) {
       return {
         flag: true,
@@ -351,11 +360,16 @@ const resetPassword = async (user, newPassword) => {
       };
     }
     // newPassword = await bcrypt.hash(newPassword, 8);
-    await dbService.updateOne(User, where, {
+    await User?.findByIdAndUpdate(user.id, {
       password: newPassword,
       resetPasswordLink: null,
       loginRetryLimit: 0,
     });
+    // await dbService.updateOne(User, where, {
+    //   password: newPassword,
+    //   resetPasswordLink: null,
+    //   loginRetryLimit: 0,
+    // });
     let mailObj = {
       subject: "Reset Password",
       to: user.email,
