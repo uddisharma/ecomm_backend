@@ -13,17 +13,13 @@ const checkRolePermission = require("../../middleware/checkRolePermission");
 router
   .route("/admin/user/me")
   .get(auth(PLATFORM.ADMIN), userController.getLoggedInUserInfo);
-router
-  .route("/admin/user/create")
-  .post(auth(PLATFORM.ADMIN), checkRolePermission, userController.addUser);
+router.route("/admin/user/create").post(userController.addUser);
 router.route("/admin/user/list").get(userController.findAllUser);
 router
   .route("/admin/user/count")
   .post(auth(PLATFORM.ADMIN), checkRolePermission, userController.getUserCount);
 router.route("/admin/singleuser/:id").get(userController.getUser);
-router
-  .route("/admin/user/update/:id")
-  .put(auth(PLATFORM.ADMIN), checkRolePermission, userController.updateUser);
+router.route("/admin/user/update/:id").patch(userController.updateUser);
 router
   .route("/admin/user/partial-update/:id")
   .put(
@@ -59,9 +55,7 @@ router
     checkRolePermission,
     userController.bulkUpdateUser
   );
-router
-  .route("/admin/user/delete/:id")
-  .delete(auth(PLATFORM.ADMIN), checkRolePermission, userController.deleteUser);
+router.route("/admin/user/delete/:id").delete(userController.deleteUser);
 router
   .route("/admin/user/deleteMany")
   .post(

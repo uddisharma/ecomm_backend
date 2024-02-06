@@ -53,7 +53,7 @@ const addUser = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
-    dataToCreate.addedBy = req.user.id;
+    // dataToCreate.addedBy = req.user.id;
     dataToCreate = new User(dataToCreate);
     let createdUser = await dbService.create(User, dataToCreate);
     return res.success({ data: createdUser });
@@ -104,6 +104,7 @@ const findAllUser = async (req, res) => {
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
       select: ["-shippingAddress"],
+      sort: "-createdAt",
     };
     const query = {};
 
@@ -198,7 +199,7 @@ const updateUser = async (req, res) => {
   try {
     let dataToUpdate = {
       ...req.body,
-      updatedBy: req.user.id,
+      // updatedBy: req.user.id,
     };
     let validateRequest = validation.validateParamsWithJoi(
       dataToUpdate,
@@ -212,7 +213,7 @@ const updateUser = async (req, res) => {
     const query = {
       _id: {
         $eq: req.params.id,
-        $ne: req.user.id,
+        // $ne: req.user.id,
       },
     };
     let updatedUser = await dbService.updateOne(User, query, dataToUpdate);
@@ -351,15 +352,10 @@ const deleteUser = async (req, res) => {
     const query = {
       _id: {
         $eq: req.params.id,
-        $ne: req.user.id,
+        // $ne: req.user.id,
       },
     };
-    let deletedUser;
-    if (req.body.isWarning) {
-      deletedUser = await deleteDependentService.countUser(query);
-    } else {
-      deletedUser = await deleteDependentService.deleteUser(query);
-    }
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) {
       return res.recordNotFound();
     }

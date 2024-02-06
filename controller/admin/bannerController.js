@@ -19,6 +19,7 @@ const Seller = require("../../model/seller");
 const addBanner = async (req, res) => {
   try {
     let dataToCreate = { ...(req.body || {}) };
+    // return res?.send(dataToCreate);
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       bannerSchemaKey.schemaKeys
@@ -137,6 +138,28 @@ const findSellerAllBanner = async (req, res) => {
   }
 };
 
+const findAllSellersBanner = async (req, res) => {
+  try {
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      sort: "-updatedAt",
+    };
+    let query = {
+      sellerId: req.params?.sellerId,
+    };
+
+    let foundSellers = await dbService.paginate(Banner, query, options);
+    if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: foundSellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 /**
  * @description : find document of Banner from table by id;
  * @param {Object} req : request including id in request params.
@@ -197,7 +220,7 @@ const updateBanner = async (req, res) => {
   try {
     let dataToUpdate = {
       ...req.body,
-      updatedBy: req.user.id,
+      // updatedBy: req.user.id,
     };
     let validateRequest = validation.validateParamsWithJoi(
       dataToUpdate,
@@ -406,4 +429,5 @@ module.exports = {
   deleteManyBanner,
   softDeleteManyBanner,
   findSellerAllBanner,
+  findAllSellersBanner,
 };

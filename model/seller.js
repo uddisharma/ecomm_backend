@@ -65,6 +65,7 @@ const schema = new Schema(
 
     discount: {
       type: String,
+      default: "10%",
     },
 
     //step-4
