@@ -11,6 +11,17 @@ const ObjectId = require("mongodb").ObjectId;
 const auth = require("../../services/auth");
 const deleteDependentService = require("../../utils/deleteDependent");
 const utils = require("../../utils/common");
+const CryptoJS = require("crypto-js");
+
+function generateReferralCode(name, email, phoneNumber) {
+  const userString = `${name}${email}${phoneNumber}`;
+
+  const hash = CryptoJS.SHA256(userString).toString(CryptoJS.enc.Hex);
+
+  const referralCode = hash.substring(0, 8).toUpperCase();
+
+  return referralCode;
+}
 
 /**
  * @description : get information of logged-in User.
@@ -53,7 +64,19 @@ const addUser = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
+    dataToCreate.referralCode = generateReferralCode(
+      req.body.name,
+      req.body.email,
+      req.body.mobileNo
+    );
     // dataToCreate.addedBy = req.user.id;
+    const exist = await User.findOne({ email: req.body.email });
+    if (exist) {
+      return res.status(200).json({
+        status: "EXIST",
+        message: "User already exist with this email",
+      });
+    }
     dataToCreate = new User(dataToCreate);
     let createdUser = await dbService.create(User, dataToCreate);
     return res.success({ data: createdUser });

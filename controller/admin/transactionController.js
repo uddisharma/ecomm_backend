@@ -88,7 +88,8 @@ const findAllWalletTransaction = async (req, res) => {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-    //   populate: [{ path: "seller", select: "username" }],
+      populate: [{ path: "seller", select: "username shopname" }],
+      sort: "-updatedAt",
     };
     let query = {};
 
@@ -118,17 +119,23 @@ const findAllWalletTransaction = async (req, res) => {
  */
 const getWalletTransaction = async (req, res) => {
   try {
-    let query = {};
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.validationError({ message: "invalid objectId." });
-    }
-    query._id = req.params.id;
-    let options = {};
-    let foundWalletTransaction = await dbService.findOne(
-      WalletTransaction,
-      query,
-      options
-    );
+    // let query = {};
+    // if (!ObjectId.isValid(req.params.id)) {
+    //   return res.validationError({ message: "invalid objectId." });
+    // }
+    // query._id = req.params.id;
+    // let options = {};
+    // let foundWalletTransaction = await dbService.findOne(
+    //   WalletTransaction,
+    //   query,
+    //   options
+    // );
+    const foundWalletTransaction = await WalletTransaction?.findById(
+      req.params.id
+    ).populate({
+      path: "seller",
+      select: "username shopname",
+    });
     if (!foundWalletTransaction) {
       return res.recordNotFound();
     }
@@ -175,6 +182,7 @@ const getWalletTransactionCount = async (req, res) => {
  */
 const updateWalletTransaction = async (req, res) => {
   try {
+    // return res.send(req.body);
     let dataToUpdate = {
       ...req.body,
       // updatedBy: req.user.id,

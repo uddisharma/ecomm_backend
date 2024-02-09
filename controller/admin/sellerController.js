@@ -13,6 +13,162 @@ const deleteDependentService = require("../../utils/deleteDependent");
 const utils = require("../../utils/common");
 const category = require("../../model/category");
 
+function validateData(data) {
+  const requiredFields = [];
+
+  // Step 1
+  if (!data.shopname) {
+    requiredFields.push("shopname");
+  }
+  if (!data.username) {
+    requiredFields.push("username");
+  }
+  if (!data.cover) {
+    requiredFields.push("cover");
+  }
+  if (!data.email) {
+    requiredFields.push("email");
+  }
+  if (!data.mobileNo) {
+    requiredFields.push("mobileNo");
+  }
+  if (!data.alternatemobileNo) {
+    requiredFields.push("alternatemobileNo");
+  }
+  if (!data.description) {
+    requiredFields.push("description");
+  }
+
+  // Step 2
+  if (
+    !data.shopaddress ||
+    !data.shopaddress.pincode ||
+    !data.shopaddress.address1 ||
+    !data.shopaddress.address2 ||
+    !data.shopaddress.landmark ||
+    !data.shopaddress.city ||
+    !data.shopaddress.state
+  ) {
+    requiredFields.push("shopaddress");
+  }
+
+  // Step 3
+  if (!data.sellingCategory || data.sellingCategory.length === 0) {
+    requiredFields.push("sellingCategory");
+  } else {
+    for (const category of data.sellingCategory) {
+      if (!category.category || !category.photo) {
+        requiredFields.push("sellingCategory");
+        break;
+      }
+    }
+  }
+
+  // Step 4
+  if (!data.socialLinks || !data.socialLinks.instagram) {
+    requiredFields.push("socialLinks");
+  }
+
+  // Step 5
+  if (
+    !data.owner ||
+    !data.owner.personal ||
+    !data.owner.personal.name ||
+    !data.owner.personal.phone ||
+    !data.owner.personal.email ||
+    !data.owner.address ||
+    !data.owner.address.pincode ||
+    !data.owner.address.address1 ||
+    !data.owner.address.address2 ||
+    !data.owner.address.landmark ||
+    !data.owner.address.city ||
+    !data.owner.address.state
+  ) {
+    requiredFields.push("owner");
+  }
+
+  // Step 6
+  if (
+    !data.legal ||
+    !data.legal.aadhar ||
+    !data.legal.aadhar.name ||
+    !data.legal.aadhar.address ||
+    !data.legal.aadhar.careof ||
+    !data.legal.aadhar.aadharnumber ||
+    data.legal.aadhar.aadharnumber.length !== 12 ||
+    data.legal.aadhar.signed !== true ||
+    !data.legal.pan ||
+    !data.legal.pan.name ||
+    !data.legal.pan.type ||
+    !data.legal.pan.pannumber ||
+    data.legal.pan.pannumber.length !== 10 ||
+    data.legal.pan.signed !== true ||
+    !data.legal.bank ||
+    !data.legal.bank.name ||
+    !data.legal.bank.branch ||
+    !data.legal.bank.account ||
+    !data.legal.bank.ifsc ||
+    data.legal.bank.signed !== true ||
+    !data.legal.gst ||
+    !data.legal.taxid ||
+    !data.legal.certificate ||
+    data.legal.certificate.length < 3 ||
+    data.legal.signed !== true
+  ) {
+    requiredFields.push("legal");
+  }
+
+  // Step 7
+  if (
+    !data.deliverypartner ||
+    !data.deliverypartner.personal ||
+    !data.deliverypartner.personal.have ||
+    !data.deliverypartner.partner ||
+    !data.deliverypartner.partner.email ||
+    !data.deliverypartner.partner.password ||
+    !data.deliverypartner.partner.warehouses ||
+    data.deliverypartner.partner.warehouses.length === 0
+  ) {
+    requiredFields.push("deliverypartner");
+  } else {
+    for (const warehouse of data.deliverypartner.partner.warehouses) {
+      if (
+        !warehouse.warehouse_name ||
+        !warehouse.name ||
+        !warehouse.address ||
+        !warehouse.address_2 ||
+        !warehouse.city ||
+        !warehouse.state ||
+        !warehouse.pincode ||
+        !warehouse.phone ||
+        !warehouse.default
+      ) {
+        requiredFields.push("deliverypartner");
+        break;
+      }
+    }
+  }
+
+  // Additional fields
+  if (!data.rating || !data.rating.rate || !data.rating.total) {
+    requiredFields.push("rating");
+  }
+  if (!data.charge) {
+    requiredFields.push("charge");
+  }
+  if (!data.isActive) {
+    requiredFields.push("isActive");
+  }
+  if (data.isDeleted) {
+    requiredFields.push("isDeleted");
+  }
+  if (data.isOnboarded) {
+    requiredFields.push("isOnboarded");
+  }
+
+  return requiredFields;
+}
+
 const addSeller = async (req, res) => {
   try {
     let dataToCreate = { ...(req.body || {}) };
@@ -92,8 +248,48 @@ const findAllSellers = async (req, res) => {
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
       select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
     };
-    let query = {};
+    let query = { isDeleted: false };
 
+    let foundSellers = await dbService.paginate(Seller, query, options);
+    if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: foundSellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const findAllSellersWithPendingOnboarding = async (req, res) => {
+  try {
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
+      sort: "-createdAt",
+    };
+    let query = { isDeleted: false, isOnboarded: false };
+    let foundSellers = await dbService.paginate(Seller, query, options);
+    if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: foundSellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const findAllSellersWithDeleted = async (req, res) => {
+  try {
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
+      sort: "-createdAt",
+    };
+    let query = { isDeleted: true };
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
       return res.recordNotFound();
@@ -106,13 +302,13 @@ const findAllSellers = async (req, res) => {
 
 const findSingleSeller = async (req, res) => {
   const searchTerm = req.query.term;
-
   try {
     const sellers = await Seller.find({
       $or: [
         { shopname: { $regex: searchTerm, $options: "i" } },
         { username: { $regex: searchTerm, $options: "i" } },
       ],
+      isDeleted: false,
     }).select("shopname username");
     if (sellers?.length <= 0) {
       return res.recordNotFound();
@@ -122,6 +318,48 @@ const findSingleSeller = async (req, res) => {
     return res.internalServerError({ message: error.message });
   }
 };
+
+const findSingleSellerWithPendingOnboarding = async (req, res) => {
+  const searchTerm = req.query.term;
+
+  try {
+    const sellers = await Seller.find({
+      $or: [
+        { shopname: { $regex: searchTerm, $options: "i" } },
+        { username: { $regex: searchTerm, $options: "i" } },
+      ],
+      isOnboarded: false,
+      isDeleted: false,
+    }).select("shopname username shopaddress email mobileNo");
+    if (sellers?.length <= 0) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: sellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const findSingleSellerWithdeleted = async (req, res) => {
+  const searchTerm = req.query.term;
+
+  try {
+    const sellers = await Seller.find({
+      $or: [
+        { shopname: { $regex: searchTerm, $options: "i" } },
+        { username: { $regex: searchTerm, $options: "i" } },
+      ],
+      isDeleted: true,
+    }).select("shopname username shopaddress email mobileNo");
+    if (sellers?.length <= 0) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: sellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 const findAllSellersWithCategory = async (req, res) => {
   try {
     let options = {
@@ -293,6 +531,7 @@ const getSellerCount = async (req, res) => {
 
 const updateSeller = async (req, res) => {
   try {
+    // return res.send(req.body);
     let dataToUpdate = {
       ...req.body,
     };
@@ -301,7 +540,30 @@ const updateSeller = async (req, res) => {
         $eq: req.params.id,
       },
     };
-    let updatedSeller = await dbService.updateOne(Seller, query, dataToUpdate);
+    // let updatedSeller = await dbService.updateOne(Seller, query, dataToUpdate);
+    let updatedSeller = await Seller.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updatedSeller) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: updatedSeller });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const updateAllSellers = async (req, res) => {
+  try {
+    let updatedSeller = await Seller.updateMany(
+      { isActive: false },
+      { ...req.body },
+      {
+        new: true,
+      }
+    );
     if (!updatedSeller) {
       return res.recordNotFound();
     }
@@ -389,13 +651,18 @@ const updateSellerProfile = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
+    // delete data.createdAt;
     // delete data.password;
-    delete data.createdAt;
-    delete data.updatedAt;
-    if (data.id) delete data.id;
-    let result = await dbService.updateOne(Seller, { _id: req.user.id }, data, {
-      new: true,
-    });
+    // delete data.updatedAt;
+    // if (data.id) delete data.id;
+    let result = await dbService.updateOne(
+      Seller,
+      { _id: req.params.id },
+      data,
+      {
+        new: true,
+      }
+    );
     if (!result) {
       return res.recordNotFound();
     }
@@ -430,4 +697,9 @@ module.exports = {
   getSellerDetailsForCheckOut,
   findSingleSeller,
   deleteCategory,
+  findAllSellersWithPendingOnboarding,
+  findSingleSellerWithPendingOnboarding,
+  updateAllSellers,
+  findAllSellersWithDeleted,
+  findSingleSellerWithdeleted,
 };

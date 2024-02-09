@@ -16,26 +16,21 @@ mongoosePaginate.paginate.options = { customLabels: myCustomLabels };
 const Schema = mongoose.Schema;
 const schema = new Schema(
   {
-    seller_name: {
+    name: {
       type: String,
     },
-
-    store_address: {
-      type: String,
-    },
-
     email: {
       type: String,
     },
-    
     phone: {
       type: String,
     },
-
-    monthly_orders: {
+    subject: {
       type: String,
     },
-
+    message: {
+      type: String,
+    },
     status: {
       type: Boolean,
       default: false,
@@ -73,5 +68,5 @@ schema.method("toJSON", function () {
 });
 schema.plugin(mongoosePaginate);
 schema.plugin(idValidator);
-const SellerRequest = mongoose.model("sellerRequest", schema);
-module.exports = SellerRequest;
+const Contacts = mongoose.model("contacts", schema);
+module.exports = Contacts;
