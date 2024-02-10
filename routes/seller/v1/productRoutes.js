@@ -52,13 +52,11 @@ router
     checkRolePermission,
     productController.partialUpdateProduct
   );
-router
-  .route("/seller/api/v1/product/softDelete/:id")
-  .put(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
-    productController.softDeleteProduct
-  );
+router.route("/seller/api/v1/product/softDelete/:id").patch(
+  // auth(PLATFORM.DEVICE),
+  // checkRolePermission,
+  productController.softDeleteProduct
+);
 router
   .route("/seller/api/v1/product/softDeleteMany")
   .put(
@@ -80,13 +78,11 @@ router
     checkRolePermission,
     productController.bulkUpdateProduct
   );
-router
-  .route("/seller/api/v1/product/delete/:id")
-  .delete(
-    // auth(PLATFORM.DEVICE),
-    // checkRolePermission,
-    productController.deleteProduct
-  );
+router.route("/seller/api/v1/product/delete/:id").delete(
+  // auth(PLATFORM.DEVICE),
+  // checkRolePermission,
+  productController.deleteProduct
+);
 router
   .route("/seller/api/v1/product/deleteMany")
   .post(

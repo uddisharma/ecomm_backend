@@ -45,13 +45,11 @@ router
     checkRolePermission,
     bannerController.partialUpdateBanner
   );
-router
-  .route("/admin/banner/softDelete/:id")
-  .put(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    bannerController.softDeleteBanner
-  );
+router.route("/admin/banner/softDelete/:id").patch(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  bannerController.softDeleteBanner
+);
 router
   .route("/admin/banner/softDeleteMany")
   .put(

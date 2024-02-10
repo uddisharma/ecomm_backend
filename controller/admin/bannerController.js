@@ -134,6 +134,7 @@ const findAllSellersBanner = async (req, res) => {
     };
     let query = {
       sellerId: req.params?.sellerId,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundSellers = await dbService.paginate(Banner, query, options);
@@ -315,8 +316,8 @@ const softDeleteBanner = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
+      // updatedBy: req.user.id,
     };
     let updatedBanner = await dbService.updateOne(Banner, query, updateBody);
     if (!updatedBanner) {

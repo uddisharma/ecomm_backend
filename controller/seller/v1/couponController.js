@@ -91,6 +91,7 @@ const findSellersCoupons = async (req, res) => {
     }
     const query = {
       seller: req.params.seller,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundCoupons = await dbService.paginate(Coupon, query, options);

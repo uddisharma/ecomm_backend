@@ -71,13 +71,11 @@ router
     checkRolePermission,
     orderController.bulkUpdateOrder
   );
-router
-  .route("/admin/order/delete/:id")
-  .delete(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    orderController.deleteOrder
-  );
+router.route("/admin/order/delete/:id").delete(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  orderController.deleteOrder
+);
 router
   .route("/admin/order/deleteMany")
   .post(

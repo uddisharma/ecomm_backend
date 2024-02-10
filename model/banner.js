@@ -29,6 +29,10 @@ const schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "seller",
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

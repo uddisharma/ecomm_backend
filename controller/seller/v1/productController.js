@@ -114,6 +114,7 @@ const findSellersAllProduct = async (req, res) => {
 
     let query = {
       sellerId: req.params.id,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundProducts = await dbService.paginate(Product, query, options);
@@ -307,8 +308,8 @@ const softDeleteProduct = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
+      // updatedBy: req.user.id,
     };
     let updatedProduct = await dbService.updateOne(Product, query, updateBody);
     if (!updatedProduct) {
