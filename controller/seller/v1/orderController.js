@@ -9,8 +9,8 @@ const validation = require("../../../utils/validateRequest");
 const dbService = require("../../../utils/dbService");
 const ObjectId = require("mongodb").ObjectId;
 const utils = require("../../../utils/common");
-const Seller = require("../../../model/seller");
 const mongoose = require("mongoose");
+const Seller = require("../../../model/seller");
 const Products = require("../../../model/product");
 const Coupons = require("../../../model/coupons");
 const Tickets = require("../../../model/tickets");
@@ -108,6 +108,68 @@ const findAllOrder = async (req, res) => {
     let query = {
       sellerId: req.params.id,
       date: formattedDate,
+      isDeleted: false,
+      // createdAt: { $gte: dateStart, $lte: dateEnd },
+    };
+
+    if (req.query?.status && req.query.status !== "All") {
+      query.status = req.query.status;
+    }
+    if (req.query?.courior) {
+      if (req.query.courior == "Local") {
+        query.courior = "Local";
+      } else if (req.query.courior == "Serviceable") {
+        query.courior = { $ne: "Local" };
+      }
+    }
+
+    let foundOrders = await dbService.paginate(Order, query, options);
+    if (!foundOrders || !foundOrders.data || !foundOrders.data.length) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: foundOrders });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const findAllDeletedOrder = async (req, res) => {
+  try {
+    // const requestedDate = new Date(req.query.date);
+
+    // function formatDate(dateString) {
+    //   const dateParts = dateString.split("-");
+    //   const formattedDate =
+    //     dateParts[1] + "/" + dateParts[2] + "/" + dateParts[0];
+    //   return formattedDate;
+    // }
+    // const formattedDate = formatDate(req.query.date);
+
+    // if (isNaN(requestedDate.getTime())) {
+    //   return res.status(400).json({ error: "Invalid date format" });
+    // }
+
+    // const dateStart = new Date(requestedDate);
+    // dateStart.setHours(0, 0, 0, 0);
+
+    // const dateEnd = new Date(requestedDate);
+    // dateEnd.setHours(23, 59, 59, 999);
+
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      populate: [
+        { path: "customerId", select: "name email shippingAddress" },
+        {
+          path: "orderItems.productId",
+          select: "name price images",
+        },
+      ],
+    };
+    let query = {
+      sellerId: req.params.id,
+      isDeleted: true,
       // createdAt: { $gte: dateStart, $lte: dateEnd },
     };
 
@@ -579,8 +641,15 @@ const getCounts = async (req, res) => {
 
     const tickets = await Tickets.countDocuments({ seller: seller });
 
+    const categories = await Seller.findOne({ seller: seller });
+
+    let Categorycount = 0;
+    if (categories) {
+      Categorycount = categories?.sellingCategory?.length;
+    }
+
     return res.success({
-      data: { revenue, orders, products, coupons, tickets },
+      data: { revenue, orders, products, coupons, tickets, Categorycount },
     });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -664,4 +733,5 @@ module.exports = {
   getTotalSalesForSellerAndDate,
   getCounts,
   sevenDaysOrder,
+  findAllDeletedOrder,
 };

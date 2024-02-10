@@ -9,6 +9,10 @@ const validation = require("../../utils/validateRequest");
 const dbService = require("../../utils/dbService");
 const ObjectId = require("mongodb").ObjectId;
 const utils = require("../../utils/common");
+const Seller = require("../../model/seller");
+const Products = require("../../model/product");
+const Coupons = require("../../model/coupons");
+const Tickets = require("../../model/tickets");
 
 /**
  * @description : create document of Order in mongodb collection.
@@ -352,8 +356,7 @@ const softDeleteOrder = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
     };
     let updatedOrder = await dbService.updateOne(Order, query, updateBody);
     if (!updatedOrder) {
@@ -439,6 +442,47 @@ const softDeleteManyOrder = async (req, res) => {
   }
 };
 
+const getCounts = async (req, res) => {
+  try {
+    // const seller = mongoose.Types.ObjectId(req.params.seller);
+
+    const pipeline = [
+      // {
+      //   $match: {
+      //     sellerId: mongoose.Types.ObjectId(seller),
+      //   },
+      // },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$totalAmount" },
+          charges: { $sum: "$charge" },
+          numberOfOrders: { $sum: 1 },
+        },
+      },
+    ];
+    const result = await dbService.aggregate(Order, pipeline);
+
+    const revenue =
+      (result.length > 0 ? result[0].totalSales : 0) -
+      (result?.length > 0 ? result[0].charges : 0);
+
+    const orders = result.length > 0 ? result[0].numberOfOrders : 0;
+
+    const products = await Products.countDocuments();
+
+    const coupons = await Coupons.countDocuments();
+
+    const tickets = await Tickets.countDocuments();
+
+    return res.success({
+      data: { revenue, orders, products, coupons, tickets },
+    });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addOrder,
   bulkInsertOrder,
@@ -453,5 +497,6 @@ module.exports = {
   deleteOrder,
   deleteManyOrder,
   softDeleteManyOrder,
-  getAllOrdersByUser
+  getAllOrdersByUser,
+  getCounts,
 };

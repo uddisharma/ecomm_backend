@@ -46,7 +46,7 @@ const addUser = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
-    dataToCreate.addedBy = req.user.id;
+    // dataToCreate.addedBy = req.user.id;
     dataToCreate = new User(dataToCreate);
     let createdUser = await dbService.create(User, dataToCreate);
     return res.success({ data: createdUser });

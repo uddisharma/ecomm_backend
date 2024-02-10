@@ -75,35 +75,21 @@ const bulkInsertBanner = async (req, res) => {
  */
 const findAllBanner = async (req, res) => {
   try {
-    let options = {};
-    let query = {};
-    let validateRequest = validation.validateFilterWithJoi(
-      req.body,
-      bannerSchemaKey.findFilterKeys,
-      Banner.schema.obj
-    );
-    if (!validateRequest.isValid) {
-      return res.validationError({ message: `${validateRequest.message}` });
-    }
-    if (typeof req.body.query === "object" && req.body.query !== null) {
-      query = { ...req.body.query };
-    }
-    if (req.body.isCountOnly) {
-      let totalRecords = await dbService.count(Banner, query);
-      return res.success({ data: { totalRecords } });
-    }
-    if (
-      req.body &&
-      typeof req.body.options === "object" &&
-      req.body.options !== null
-    ) {
-      options = { ...req.body.options };
-    }
-    let foundBanners = await dbService.paginate(Banner, query, options);
-    if (!foundBanners || !foundBanners.data || !foundBanners.data.length) {
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      sort: "-updatedAt",
+    };
+    let query = {
+      sellerId: null,
+    };
+
+    let foundSellers = await dbService.paginate(Banner, query, options);
+    if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
       return res.recordNotFound();
     }
-    return res.success({ data: foundBanners });
+    return res.success({ data: foundSellers });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }

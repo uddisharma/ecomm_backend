@@ -62,6 +62,10 @@ const schema = new Schema(
     length: { type: String },
     breadth: { type: String },
     height: { type: String },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

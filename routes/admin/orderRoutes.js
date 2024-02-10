@@ -45,13 +45,11 @@ router
     checkRolePermission,
     orderController.partialUpdateOrder
   );
-router
-  .route("/admin/order/softDelete/:id")
-  .put(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    orderController.softDeleteOrder
-  );
+router.route("/admin/order/softDelete/:id").patch(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  orderController.softDeleteOrder
+);
 router
   .route("/admin/order/softDeleteMany")
   .put(
@@ -88,9 +86,8 @@ router
     orderController.deleteManyOrder
   );
 
-router.get(
-  "/admin/order/user/:customerId",
-  orderController.getAllOrdersByUser
-);
+router.get("/admin/order/user/:customerId", orderController.getAllOrdersByUser);
+
+router.get("/admin/stats/count", orderController?.getCounts);
 
 module.exports = router;

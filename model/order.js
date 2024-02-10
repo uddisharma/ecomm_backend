@@ -90,6 +90,10 @@ const schema = new Schema(
     date: {
       type: String,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

@@ -18,6 +18,13 @@ router.route("/seller/api/v1/order/list/:id").get(
   // checkRolePermission,
   orderController.findAllOrder
 );
+
+router.route("/seller/api/v1/order/deleted/list/:id").get(
+  // auth(PLATFORM.DEVICE),
+  // checkRolePermission,
+  orderController.findAllDeletedOrder
+);
+
 router
   .route("/seller/api/v1/order/count")
   .post(

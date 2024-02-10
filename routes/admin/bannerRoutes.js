@@ -12,13 +12,11 @@ const checkRolePermission = require("../../middleware/checkRolePermission");
 
 router.post("/admin/banner/create", bannerController.addBanner);
 // .post(auth(PLATFORM.ADMIN), checkRolePermission, bannerController.addBanner);
-router
-  .route("/admin/banner/list")
-  .post(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    bannerController.findAllBanner
-  );
+router.route("/admin/banner/list").get(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  bannerController.findAllBanner
+);
 router
   .route("/admin/seller/banner/list/:username")
   .get(bannerController.findSellerAllBanner);
