@@ -52,13 +52,11 @@ router
     checkRolePermission,
     walletTransactionController.partialUpdateWalletTransaction
   );
-router
-  .route("/seller/api/v1/wallettransaction/softDelete/:id")
-  .put(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
-    walletTransactionController.softDeleteWalletTransaction
-  );
+router.route("/seller/api/v1/wallettransaction/softDelete/:id").patch(
+  // auth(PLATFORM.DEVICE),
+  // checkRolePermission,
+  walletTransactionController.softDeleteWalletTransaction
+);
 router
   .route("/seller/api/v1/wallettransaction/softDeleteMany")
   .put(

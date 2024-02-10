@@ -310,8 +310,8 @@ const softDeleteWalletTransaction = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
+      // updatedBy: req.user.id,
     };
     let updatedWalletTransaction = await dbService.updateOne(
       WalletTransaction,
@@ -418,11 +418,12 @@ const findSellersTransaction = async (req, res) => {
         page: Number(req.query.page),
         limit: Number(req.query.limit),
         skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-        sort: { updatedAt: -1 },
+        sort: "-createdAt",
       };
     }
     const query = {
       seller: req.params.seller,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundTransactions = await dbService.paginate(

@@ -128,6 +128,7 @@ exports.getSellerTickets = async (req, res) => {
 
     let query = {
       seller: req.params.seller,
+      isDeleted:req.query.isDeleted
     };
 
     let foundProducts = await dbService.paginate(Tickets, query, options);

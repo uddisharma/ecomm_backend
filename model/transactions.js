@@ -37,6 +37,10 @@ const schema = new Schema(
     to: {
       type: Date,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

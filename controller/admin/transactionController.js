@@ -91,7 +91,9 @@ const findAllWalletTransaction = async (req, res) => {
       populate: [{ path: "seller", select: "username shopname" }],
       sort: "-updatedAt",
     };
-    let query = {};
+    let query = {
+      isDeleted: req.query.isDeleted,
+    };
 
     let foundWalletTransactions = await dbService.paginate(
       WalletTransaction,
@@ -302,8 +304,8 @@ const softDeleteWalletTransaction = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
+      // updatedBy: req.user.id,
     };
     let updatedWalletTransaction = await dbService.updateOne(
       WalletTransaction,

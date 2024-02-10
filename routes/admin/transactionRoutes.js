@@ -27,20 +27,16 @@ router
     checkRolePermission,
     walletTransactionController.getWalletTransactionCount
   );
-router
-  .route("/admin/transaction/:id")
-  .get(
-    // auth(PLATFORM.ADMIN),
-    // checkRolePermission,
-    walletTransactionController.getWalletTransaction
-  );
-router
-  .route("/admin/transaction/update/:id")
-  .patch(
-    // auth(PLATFORM.ADMIN),
-    // checkRolePermission,
-    walletTransactionController.updateWalletTransaction
-  );
+router.route("/admin/transaction/:id").get(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  walletTransactionController.getWalletTransaction
+);
+router.route("/admin/transaction/update/:id").patch(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  walletTransactionController.updateWalletTransaction
+);
 router
   .route("/admin/transaction/partial-update/:id")
   .put(
@@ -48,13 +44,11 @@ router
     checkRolePermission,
     walletTransactionController.partialUpdateWalletTransaction
   );
-router
-  .route("/admin/transaction/softDelete/:id")
-  .put(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    walletTransactionController.softDeleteWalletTransaction
-  );
+router.route("/admin/transaction/softDelete/:id").patch(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  walletTransactionController.softDeleteWalletTransaction
+);
 router
   .route("/admin/transaction/softDeleteMany")
   .put(
@@ -76,13 +70,11 @@ router
     checkRolePermission,
     walletTransactionController.bulkUpdateWalletTransaction
   );
-router
-  .route("/admin/transaction/delete/:id")
-  .delete(
-    // auth(PLATFORM.ADMIN),
-    // checkRolePermission,
-    walletTransactionController.deleteWalletTransaction
-  );
+router.route("/admin/transaction/delete/:id").delete(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  walletTransactionController.deleteWalletTransaction
+);
 router
   .route("/admin/transaction/deleteMany")
   .post(
