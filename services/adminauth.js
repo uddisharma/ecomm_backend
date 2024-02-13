@@ -292,7 +292,7 @@ const sendResetPasswordNotification = async (user) => {
         template: "/views/email/ResetPassword",
         data: {
           userName: user.name || "-",
-          link: `http://localhost:${3000}` + viewType + token,
+          link: `http://localhost:${3000}/auth` + viewType + token,
           linkText: "Reset Password",
         },
       };

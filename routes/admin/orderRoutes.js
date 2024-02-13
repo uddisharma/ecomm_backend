@@ -92,4 +92,12 @@ router
   .route("/admin/order/revenue/datewise")
   .get(orderController.getTotalSalesForSellerAndDate);
 
+router
+  .route("/admin/order/revenue/monthwise")
+  .get(orderController.getYearlySellerRevenue);
+
+router
+  .route("/admin/order/orders/monthwise")
+  .get(orderController.getYearlySellerOrders);
+
 module.exports = router;

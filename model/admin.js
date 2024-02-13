@@ -33,6 +33,8 @@ const schema = new Schema(
 
     name: { type: String },
 
+    profile: { type: String },
+
     userType: {
       type: Number,
       enum: convertObjectToEnum(USER_TYPES),

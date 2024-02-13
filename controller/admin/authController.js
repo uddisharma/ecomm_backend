@@ -15,6 +15,7 @@ const common = require("../../utils/common");
 const CryptoJS = require("crypto-js");
 const { JWT } = require("../../constants/authConstant");
 const jwt = require("jsonwebtoken");
+const auth = require("../../services/adminauth");
 
 function generateReferralCode(name, email, phoneNumber) {
   const userString = `${name}${email}${phoneNumber}`;
@@ -280,6 +281,55 @@ const logout = async (req, res) => {
     return res.internalServerError({ data: error.message });
   }
 };
+const updateAdmin = async (req, res) => {
+  try {
+    let dataToUpdate = {
+      ...req.body,
+    };
+    let validateRequest = validation.validateParamsWithJoi(
+      dataToUpdate,
+      userSchemaKey.updateSchemaKeys
+    );
+    if (!validateRequest.isValid) {
+      return res.validationError({
+        message: `Invalid values in parameters, ${validateRequest.message}`,
+      });
+    }
+    const query = {
+      _id: {
+        $eq: req.params.id,
+        // $ne: req.user.id,
+      },
+    };
+    let updatedUser = await dbService.updateOne(User, query, dataToUpdate);
+    if (!updatedUser) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: updatedUser });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+const changePassword = async (req, res) => {
+  try {
+    let params = req.body;
+    if (!params.newPassword || !params.oldPassword) {
+      return res.validationError({
+        message: "Please Provide new Password and Old password",
+      });
+    }
+    let result = await auth.changePassword({
+      ...params,
+      userId: req.params.id,
+    });
+    if (result.flag) {
+      return res.failure({ message: result.data });
+    }
+    return res.success({ message: result.data });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
 
 module.exports = {
   register,
@@ -288,4 +338,6 @@ module.exports = {
   validateResetPasswordOtp,
   resetPassword,
   logout,
+  updateAdmin,
+  changePassword,
 };

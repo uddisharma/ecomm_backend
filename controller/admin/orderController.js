@@ -475,8 +475,20 @@ const getCounts = async (req, res) => {
 
     const tickets = await Tickets.countDocuments();
 
+    const totalSales = result[0].totalSales;
+
+    const platformRevenue = result[0].charges;
+
     return res.success({
-      data: { revenue, orders, products, coupons, tickets },
+      data: {
+        revenue,
+        orders,
+        products,
+        coupons,
+        tickets,
+        platformRevenue,
+        totalSales,
+      },
     });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -520,6 +532,124 @@ const getTotalSalesForSellerAndDate = async (req, res) => {
   }
 };
 
+const getYearlySellerRevenue = async (req, res) => {
+  const requestedYear = req.query.year;
+  function getMonthName(monthNumber) {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[monthNumber - 1];
+  }
+
+  try {
+    const revenueData = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${requestedYear}-01-01`),
+            $lt: new Date(`${Number(requestedYear) + 1}-01-01`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalRevenue: { $sum: "$totalAmount" },
+        },
+      },
+    ]);
+
+    const allMonthsData = Array.from({ length: 12 }, (_, index) => ({
+      month: getMonthName(index + 1),
+      totalRevenue: 0,
+    }));
+
+    revenueData.forEach((entry) => {
+      const monthIndex = entry._id - 1;
+      allMonthsData[monthIndex] = {
+        _id: entry._id,
+        month: getMonthName(entry._id),
+        totalRevenue: entry.totalRevenue,
+      };
+    });
+
+    res.json(allMonthsData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+};
+
+const getYearlySellerOrders = async (req, res) => {
+  const requestedYear = req.query.year;
+
+  function getMonthName(monthNumber) {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[monthNumber - 1];
+  }
+
+  try {
+    const ordersCountData = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${requestedYear}-01-01`),
+            $lt: new Date(`${Number(requestedYear) + 1}-01-01`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalOrders: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const allMonthsData = Array.from({ length: 12 }, (_, index) => ({
+      month: getMonthName(index + 1),
+      totalOrders: 0,
+    }));
+
+    ordersCountData.forEach((entry) => {
+      const monthIndex = entry._id - 1;
+      allMonthsData[monthIndex] = {
+        _id: entry._id,
+        month: getMonthName(entry._id),
+        totalOrders: entry.totalOrders,
+      };
+    });
+    res.json(allMonthsData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+};
+
 module.exports = {
   addOrder,
   bulkInsertOrder,
@@ -535,6 +665,8 @@ module.exports = {
   deleteManyOrder,
   softDeleteManyOrder,
   getAllOrdersByUser,
-  getCounts,
   getTotalSalesForSellerAndDate,
+  getCounts,
+  getYearlySellerRevenue,
+  getYearlySellerOrders,
 };
