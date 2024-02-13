@@ -27,13 +27,11 @@ router
     checkRolePermission,
     userController.partialUpdateUser
   );
-router
-  .route("/admin/user/softDelete/:id")
-  .put(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    userController.softDeleteUser
-  );
+router.route("/admin/user/softDelete/:id").patch(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  userController.softDeleteUser
+);
 router
   .route("/admin/user/softDeleteMany")
   .put(

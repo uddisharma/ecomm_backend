@@ -83,6 +83,7 @@ const findAllBanner = async (req, res) => {
     };
     let query = {
       sellerId: null,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundSellers = await dbService.paginate(Banner, query, options);

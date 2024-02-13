@@ -9,7 +9,6 @@ let idValidator = require("mongoose-id-validator");
 const bcrypt = require("bcrypt");
 const { USER_TYPES } = require("../constants/authConstant");
 const { convertObjectToEnum } = require("../utils/common");
-const authConstantEnum = require("../constants/authConstant");
 
 const myCustomLabels = {
   totalDocs: "itemCount",
@@ -70,6 +69,11 @@ const schema = new Schema(
     },
 
     loginReactiveTime: { type: Date },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

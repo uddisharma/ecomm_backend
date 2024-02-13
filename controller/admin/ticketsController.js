@@ -116,7 +116,9 @@ exports.getAllTickets = async (req, res) => {
       sort: { updatedAt: -1 },
     };
 
-    let query = {};
+    let query = {
+      isDeleted: req.query.isDeleted,
+    };
 
     let foundProducts = await dbService.paginate(Tickets, query, options);
 

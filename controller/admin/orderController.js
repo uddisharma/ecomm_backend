@@ -483,6 +483,43 @@ const getCounts = async (req, res) => {
   }
 };
 
+const getTotalSalesForSellerAndDate = async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          date: req.query.date,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$totalAmount" },
+          charges: { $sum: "$charge" },
+          numberOfOrders: { $sum: 1 },
+        },
+      },
+    ];
+
+    const result = await dbService.aggregate(Order, pipeline);
+
+    const revenue =
+      (result.length > 0 ? result[0].totalSales : 0) -
+      (result?.length > 0 ? result[0].charges : 0);
+
+    return res.success({
+      data: {
+        sales: result.length > 0 ? result[0].totalSales : 0,
+        orders: result.length > 0 ? result[0].numberOfOrders : 0,
+        charge: result?.length > 0 ? result[0].charges : 0,
+        revenue: revenue,
+      },
+    });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addOrder,
   bulkInsertOrder,
@@ -499,4 +536,5 @@ module.exports = {
   softDeleteManyOrder,
   getAllOrdersByUser,
   getCounts,
+  getTotalSalesForSellerAndDate,
 };

@@ -88,4 +88,8 @@ router.get("/admin/order/user/:customerId", orderController.getAllOrdersByUser);
 
 router.get("/admin/stats/count", orderController?.getCounts);
 
+router
+  .route("/admin/order/revenue/datewise")
+  .get(orderController.getTotalSalesForSellerAndDate);
+
 module.exports = router;

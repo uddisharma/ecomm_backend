@@ -129,7 +129,9 @@ const findAllUser = async (req, res) => {
       select: ["-shippingAddress"],
       sort: "-createdAt",
     };
-    const query = {};
+    const query = {
+      isDeleted: req.query.isDeleted,
+    };
 
     let foundUsers = await dbService.paginate(User, query, options);
     if (!foundUsers || !foundUsers.data || !foundUsers.data.length) {
@@ -337,14 +339,12 @@ const softDeleteUser = async (req, res) => {
       });
     }
     const query = {
-      _id: {
-        $eq: req.params.id,
-        $ne: req.user.id,
-      },
+      _id: req.params.id,
+      // $ne: req.user.id,
     };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
+      // updatedBy: req.user.id,
     };
     let updatedUser = await deleteDependentService.softDeleteUser(
       query,
