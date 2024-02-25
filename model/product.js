@@ -34,7 +34,7 @@ const schema = new Schema(
       ref: "category",
     },
 
-    images: { type: String },
+    images: { type: Array },
     desc: { type: String },
     stock: { type: Number },
     tags: { type: Array },

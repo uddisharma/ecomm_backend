@@ -40,15 +40,17 @@ const addBanner = async (req, res) => {
 
 const findSellerAllBanner = async (req, res) => {
   try {
-    let options = {};
-    let query = {};
+    let options = {
+      sort: { createdAt: -1 },
+    };
+    let query = { isDeleted: false };
 
     if (req.params.username) {
       const seller = await Seller.findOne({ username: req.params.username });
 
       if (!seller) {
-        return res.recordNotFound({
-          message: "Seller not found with the provided username",
+        return res.json({
+          status: "SELLERNOTFOUND",
         });
       }
 

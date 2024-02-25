@@ -420,18 +420,30 @@ const findSellersAllProduct = async (req, res) => {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-sizes", "-tags", "-instaId", "-brand"],
-      populate: [
-        { path: "sellerId", select: "username" },
-        { path: "category", select: "name" },
+      select: [
+        "-sizes",
+        "-tags",
+        "-instaId",
+        "-brand",
+        "-desc",
+        "-isDeleted",
+        "-category",
+        "-sellerId",
       ],
+      // populate: [
+      //   { path: "sellerId", select: "username" },
+      //   { path: "category", select: "name" },
+      // ],
     };
     let category = req.query.category;
     let query = category
       ? {
           category: category,
+          isDeleted: false,
         }
-      : {};
+      : {
+          isDeleted: false,
+        };
 
     if (req.params.username) {
       // Find the seller based on the username
@@ -440,8 +452,8 @@ const findSellersAllProduct = async (req, res) => {
       });
 
       if (!seller) {
-        return res.recordNotFound({
-          message: "Seller not found with the provided username.",
+        return res.json({
+          status: "SELLERNOTFOUND",
         });
       }
       query.sellerId = seller._id;

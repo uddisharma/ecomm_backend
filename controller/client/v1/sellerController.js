@@ -90,9 +90,23 @@ const findAllSellers = async (req, res) => {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
+      select: [
+        "socialLinks",
+        "username",
+        "email",
+        "mobileNo",
+        "discount",
+        "description",
+        "cover",
+        "shopname",
+        "shopaddress",
+      ],
     };
-    let query = {};
+    let query = {
+      isActive: true,
+      isDeleted: false,
+      isOnboarded: true,
+    };
 
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
@@ -148,7 +162,9 @@ const getSellingCategoryofSeller = async (req, res) => {
 
     // Check if seller or selling category was found
     if (!seller || !seller.sellingCategory) {
-      return res.notFound({ message: "Seller or selling category not found" });
+      return res.json({
+        status: "SELLERNOTFOUND",
+      });
     }
 
     // Return the seller data with populated and nested parent category name
