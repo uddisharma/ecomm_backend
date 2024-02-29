@@ -420,37 +420,39 @@ const findSellersAllProduct = async (req, res) => {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: [
-        "-sizes",
-        "-tags",
-        "-instaId",
-        "-brand",
-        "-desc",
-        "-isDeleted",
-        "-category",
-        "-sellerId",
-      ],
-      // populate: [
-      //   { path: "sellerId", select: "username" },
-      //   { path: "category", select: "name" },
-      // ],
+      select: ["-tags", "-instaId", "-isDeleted"],
+      populate: {
+        path: "sellerId",
+        select: [
+          "isActive",
+          "isDeleted",
+          "isOnboarded",
+          "username",
+          "shopname",
+        ],
+      },
     };
-    let category = req.query.category;
-    let query = category
-      ? {
-          category: category,
-          isDeleted: false,
-        }
-      : {
-          isDeleted: false,
-        };
+
+    let query = {
+      isDeleted: false,
+    };
+
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    if (req.query.color) {
+      query["colors.name"] = req.query.color;
+    }
+
+    if (req.query.size) {
+      query["sizes.size"] = req.query.size;
+    }
 
     if (req.params.username) {
-      // Find the seller based on the username
       const seller = await Seller.findOne({
         username: req.params.username,
       });
-
       if (!seller) {
         return res.json({
           status: "SELLERNOTFOUND",
@@ -470,15 +472,175 @@ const findSellersAllProduct = async (req, res) => {
     return res.internalServerError({ message: error.message });
   }
 };
+
+// const searchSellerProducts = async (req, res) => {
+//   try {
+//     let options = {
+//       page: Number(req.query.page),
+//       limit: Number(req.query.limit),
+//       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+//       select: ["-tags", "-instaId", "-isDeleted", "sellerId"],
+//       populate: {
+//         path: "sellerId",
+//         select: [
+//           "isActive",
+//           "isDeleted",
+//           "isOnboarded",
+//           "username",
+//           "shopname",
+//         ],
+//       },
+//     };
+
+//     let query = [
+//       {
+//         $match: {
+//           isDeleted: false,
+//         },
+//       },
+//     ];
+
+//     if (req.query.category) {
+//       query[0].$match.category = req.query.category;
+//     }
+
+//     if (req.query.color) {
+//       query[0].$match["colors.name"] = req.query.color;
+//     }
+
+//     if (req.query.size) {
+//       query[0].$match["sizes.size"] = req.query.size;
+//     }
+
+//     if (req.query.query) {
+//       const regex = new RegExp(req.query.query, "i");
+//       query[0].$match.$or = [
+//         { name: regex },
+//         { desc: regex },
+//         { tags: regex },
+//         { brand: regex },
+//       ];
+//     }
+
+//     if (req.params.username) {
+//       const seller = await Seller.findOne({
+//         username: req.params.username,
+//       });
+//       if (!seller) {
+//         return res.json({
+//           status: "SELLERNOTFOUND",
+//         });
+//       }
+//       query[0].$match.sellerId = seller._id;
+//     }
+//     let [totalCountQuery, foundProducts] = await Promise.all([
+//       Product.aggregate(query).count("totalCount"),
+//       Product.aggregate(query).skip(options.skip).limit(options.limit),
+//     ]);
+
+//     let totalCount =
+//       totalCountQuery.length > 0 ? totalCountQuery[0].totalCount : 0;
+
+//     let paginator = {
+//       itemCount: totalCount,
+//       perPage: options.limit,
+//       pageCount: Math.ceil(totalCount / options.limit),
+//       currentPage: options.page,
+//       slNo: options.skip + 1,
+//       hasPrevPage: options.page > 1,
+//       hasNextPage: options.page < Math.ceil(totalCount / options.limit),
+//       prev: options.page > 1 ? options.page - 1 : null,
+//       next:
+//         options.page < Math.ceil(totalCount / options.limit)
+//           ? options.page + 1
+//           : null,
+//     };
+//     if (!foundProducts || !foundProducts || !foundProducts.length) {
+//       return res.recordNotFound();
+//     }
+//     return res.json({ data: foundProducts, paginator: paginator });
+//   } catch (error) {
+//     return res.internalServerError({ message: error.message });
+//   }
+// };
+
+const searchSellerProducts = async (req, res) => {
+  try {
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      select: ["-tags", "-instaId", "-isDeleted"],
+      populate: {
+        path: "sellerId",
+        select: ["username", "shopname"],
+      },
+    };
+
+    let query = {
+      isDeleted: false,
+    };
+
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    if (req.query.color) {
+      query["colors.name"] = req.query.color;
+    }
+
+    if (req.query.size) {
+      query["sizes.size"] = req.query.size;
+    }
+
+    if (req.query.query) {
+      const regex = new RegExp(req.query.query, "i");
+      query.$or = [
+        { name: regex },
+        { desc: regex },
+        { tags: regex },
+        { brand: regex },
+      ];
+    }
+
+    if (req.params.username) {
+      const seller = await Seller.findOne({
+        username: req.params.username,
+      });
+      if (!seller) {
+        return res.json({
+          status: "SELLERNOTFOUND",
+        });
+      }
+      query.sellerId = seller._id;
+    }
+
+    let foundProducts = await dbService.paginate(Product, query, options);
+
+    if (!foundProducts || !foundProducts.data || !foundProducts.data.length) {
+      return res.recordNotFound();
+    }
+
+    return res.success({ data: foundProducts });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 const getProductById = async (req, res) => {
   try {
     const productId = req.params.id;
     const seller = req.params.seller;
 
-    const product = await Product.findById(productId).populate({
-      path: "sellerId",
-      select: "shopname username deliverypartner shopaddress",
-    });
+    const product = await Product.findById(productId).populate(
+      {
+        path: "sellerId",
+        select: "shopname username ",
+      }
+      // {
+      //   pathname: "category",
+      // }
+    );
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
@@ -490,10 +652,10 @@ const getProductById = async (req, res) => {
         .status(404)
         .json({ error: "This Product is not found from this seller" });
     }
-    // await populateProductCategories(product);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", error: error?.message });
   }
 };
 
@@ -513,4 +675,5 @@ module.exports = {
   findSellersAllProductForSearch,
   findSellersAllProduct,
   getProductById,
+  searchSellerProducts,
 };

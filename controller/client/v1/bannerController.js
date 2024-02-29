@@ -42,6 +42,10 @@ const findSellerAllBanner = async (req, res) => {
   try {
     let options = {
       sort: { createdAt: -1 },
+      populate: {
+        path: "sellerId",
+        select: ["isActive", "isDeleted", "isOnboarded"],
+      },
     };
     let query = { isDeleted: false };
 

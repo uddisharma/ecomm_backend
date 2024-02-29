@@ -105,4 +105,8 @@ router
   .route("/client/sellers/product/list/:username")
   .get(productController.findSellersAllProduct);
 
+router
+  .route("/client/sellers/product/list/search/:username")
+  .get(productController.searchSellerProducts);
+
 module.exports = router;
