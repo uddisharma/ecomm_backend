@@ -102,6 +102,7 @@ const findAllSellers = async (req, res) => {
         "shopaddress",
       ],
     };
+
     let query = {
       isActive: true,
       isDeleted: false,
@@ -117,21 +118,40 @@ const findAllSellers = async (req, res) => {
     return res.internalServerError({ message: error.message });
   }
 };
+
 const findAllSellersWithCategory = async (req, res) => {
   try {
     let options = {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
+      select: [
+        "socialLinks",
+        "username",
+        "email",
+        "mobileNo",
+        "discount",
+        "description",
+        "cover",
+        "shopname",
+        "shopaddress",
+        "sellingCategory",
+      ],
     };
 
     let categoryId = req.params.category;
     let query = categoryId
       ? {
           "sellingCategory.category": categoryId,
+          isActive: true,
+          isDeleted: false,
+          isOnboarded: true,
         }
-      : {};
+      : {
+          isActive: true,
+          isDeleted: false,
+          isOnboarded: true,
+        };
 
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
@@ -359,6 +379,33 @@ const updateSellerProfile = async (req, res) => {
   }
 };
 
+const searchSeller = async (req, res) => {
+  try {
+    const { query } = req;
+    let filter = {};
+
+    if (query.query) {
+      const regex = new RegExp(query.query, "i");
+      filter.$or = [
+        { shopname: regex },
+        { username: regex },
+        { "shopaddress.address1": regex },
+        { "owner.personal.name": regex },
+        { description: regex },
+      ];
+    }
+
+    const sellers = await Seller.find(filter);
+
+    if (!sellers) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: sellers });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addSeller,
   findAllSellers,
@@ -374,4 +421,5 @@ module.exports = {
   findAllSellersWithCategory,
   getSellingCategoryofSeller,
   getSellerDetailsForCheckOut,
+  searchSeller,
 };

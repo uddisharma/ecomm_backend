@@ -350,9 +350,9 @@ const resetPassword = async (user, newPassword) => {
         data: "User not found",
       };
     }
-    newPassword = await bcrypt.hash(newPassword, 8);
+    // newPassword = await bcrypt.hash(newPassword, 8);
     await dbService.updateOne(User, where, {
-      password: password,
+      password: newPassword,
       resetPasswordLink: null,
       loginRetryLimit: 0,
     });

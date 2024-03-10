@@ -269,13 +269,16 @@ const updateAddress = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     const addressIndex = user?.shippingAddress?.findIndex(
-      (address) => address.addressNo == addressId
+      (address) => address._id == addressId
     );
 
     if (addressIndex === -1) {
       return res.status(404).json({ error: "Address not found" });
     }
-
+    user.shippingAddress[addressIndex].name = req.body.name;
+    user.shippingAddress[addressIndex].email = req.body.email;
+    user.shippingAddress[addressIndex].phone = req.body.phone;
+    user.shippingAddress[addressIndex].phone1 = req.body.phone1;
     user.shippingAddress[addressIndex].address = req.body.address;
     user.shippingAddress[addressIndex].pincode = req.body.pincode;
     user.shippingAddress[addressIndex].landmark = req.body.landmark;
@@ -285,9 +288,7 @@ const updateAddress = async (req, res) => {
 
     await user.save();
 
-    return res
-      .status(200)
-      .json({ message: "Address updated successfully", user });
+    return res.success({ data: user });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -304,7 +305,7 @@ const deleteAddress = async (req, res) => {
     }
 
     const addressIndex = user.shippingAddress.findIndex(
-      (address) => address.addressNo == addressId
+      (address) => address._id == addressId
     );
 
     if (addressIndex === -1) {

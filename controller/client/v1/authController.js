@@ -114,6 +114,7 @@ const login = async (req, res) => {
       });
     }
     let roleAccess = false;
+    
     if (req.body.includeRoleAccess) {
       roleAccess = req.body.includeRoleAccess;
     }
@@ -127,7 +128,13 @@ const login = async (req, res) => {
     //   return res.badRequest({ message: result.data });
     // }
 
-    const user = await User.findOne({ email: req.body.username });
+    const user = await User.findOne({ email: req.body.username }).select([
+      "-loginRetryLimit",
+      "-isDeleted",
+      "-resetPasswordLink",
+      "-userType",
+    ]);
+
     if (user) {
       // const matched = bcrypt.compareSync(password, user.password);
       const matched = user.password == password;
@@ -258,6 +265,7 @@ const resetPassword = async (req, res) => {
         message: "Your reset password link is expired or invalid",
       });
     }
+
     let response = await authService.resetPassword(found, params.newPassword);
     if (!response || response.flag) {
       return res.failure({ message: response.data });
