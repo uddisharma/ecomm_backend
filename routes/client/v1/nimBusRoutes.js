@@ -53,4 +53,10 @@ router.route("/client/nimbus/check-service").post(
   nimBusController.CheckServiceAndRate
 );
 
+router.route("/client/nimbus/check-service-rates").post(
+  // auth(PLATFORM.ADMIN),
+  // checkRolePermission,
+  nimBusController.getDeliveryRates
+);
+
 module.exports = router;

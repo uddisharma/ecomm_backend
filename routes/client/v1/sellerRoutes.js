@@ -27,4 +27,6 @@ router
 
 router.route("/client/seller/update/:id").patch(sellerController.updateSeller);
 
+router.route("/client/seller/search/all").get(sellerController.searchSeller);
+
 module.exports = router;

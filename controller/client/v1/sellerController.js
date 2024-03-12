@@ -397,7 +397,7 @@ const searchSeller = async (req, res) => {
 
     const sellers = await Seller.find(filter);
 
-    if (!sellers) {
+    if (sellers == null || sellers?.length <= 0) {
       return res.recordNotFound();
     }
     return res.success({ data: sellers });
