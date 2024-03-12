@@ -128,6 +128,7 @@ const getOrder = async (req, res) => {
         "email",
         "shopaddress",
         "mobileNo",
+        "deliverypartner.personal.name",
       ])
       .populate({
         path: "orderItems",
@@ -137,6 +138,9 @@ const getOrder = async (req, res) => {
           select: ["name", "images", "price"],
         },
       })
+      .select("-isDeleted")
+      .select("-charge")
+
       .exec();
 
     if (!order) {
@@ -170,6 +174,7 @@ const getAllOrdersByUser = async (req, res) => {
           select: ["name", "images", "price"],
         },
       })
+
       .exec();
 
     res.status(200).json(orders);
