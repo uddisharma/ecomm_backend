@@ -116,10 +116,10 @@ const CreateShipment = async (req, res) => {
 
     axios(config)
       .then(function (response) {
-        console.log(JSON.stringify(response.data));
+        res.send(JSON.stringify(response.data));
       })
       .catch(function (error) {
-        console.log(error);
+        res.send(error);
       });
   } catch (error) {
     res.json(error);
@@ -373,129 +373,237 @@ const CheckServiceAndRate = async (req, res) => {
   }
 };
 
-const getSellerDetailsForRates = async (username) => {
+// const getSellerDetailsForRates = async (username) => {
+//   try {
+//     const seller = await Seller.findOne({
+//       username,
+//     }).select("deliverypartner shopaddress charge");
+//     return seller;
+//   } catch (error) {
+//     return "something went wrong !";
+//   }
+// };
+
+// const LogintoDeliveryRates = async (email, password) => {
+//   try {
+//     const data = JSON.stringify({
+//       email: email,
+//       password: password,
+//     });
+//     const config = {
+//       method: "post",
+//       maxBodyLength: Infinity,
+//       url: "https://api.nimbuspost.com/v1/users/login",
+//       headers: {
+//         "content-type": "application/json",
+//       },
+//       data: data,
+//     };
+
+//     const response = await axios(config);
+//     return response.data?.data;
+//   } catch (error) {
+//     return "something went wrong !";
+//   }
+// };
+
+// const CheckServiceForRates = async (req, res, config) => {
+//   const {
+//     origin,
+//     destination,
+//     payment_type,
+//     order_amount,
+//     weight,
+//     length,
+//     breadth,
+//     height,
+//     token,
+//   } = config;
+//   var data = JSON.stringify({
+//     origin,
+//     destination,
+//     payment_type,
+//     order_amount,
+//     weight,
+//     length,
+//     breadth,
+//     height,
+//   });
+//   try {
+//     const axiosConfig = {
+//       method: "post",
+//       url: "https://api.nimbuspost.com/v1/courier/serviceability",
+//       data: data,
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${token}`,
+//       },
+//     };
+//     const response = await axios(axiosConfig);
+
+//     return response.data;
+//   } catch (error) {
+//     return error;
+//   }
+// };
+
+// const getDeliveryRates1 = async (req, res, seller) => {
+//   try {
+//     const sellerDetails = await getSellerDetailsForRates(seller);
+//     const { shopaddress, deliverypartner, charge } = sellerDetails;
+//     const { email, password, warehouses } = deliverypartner?.partner;
+//     const deliveryLogin = await LogintoDeliveryRates(email, password);
+//     return {
+//       token: deliveryLogin,
+//       warehouses,
+//       charge,
+//       shopaddress,
+//       personalDelivery: deliverypartner?.personal,
+//     };
+//   } catch (error) {
+//     res.status(500).send("Something went wrong !");
+//   }
+// };
+
+// const getDeliveryRates = async (req, res) => {
+//   const { seller, token, config } = req.body;
+
+//   try {
+//     const [resp, response] = await Promise.all([
+//       CheckServiceForRates(req, res, { ...config, token }),
+//       getDeliveryRates1(req, res, seller),
+//     ]);
+
+//     const {
+//       token: deliveryToken,
+//       warehouses,
+//       charge,
+//       shopaddress,
+//       personalDelivery,
+//     } = response;
+//     const ratesResp = await CheckServiceForRates(req, res, {
+//       ...config,
+//       token: deliveryToken,
+//     });
+
+//     if (!resp?.status) {
+//       res.success({
+//         data: {
+//           token,
+//           warehouses,
+//           charge,
+//           shopaddress,
+//           rates: ratesResp,
+//           personalDelivery,
+//         },
+//       });
+//     } else {
+//       res.success({
+//         data: {
+//           token,
+//           rates: resp,
+//         },
+//       });
+//     }
+//   } catch (error) {
+//     res.status(500).send("Something went wrong !");
+//   }
+// };
+
+const getSellerDetails = async (username) => {
   try {
-    const seller = await Seller.findOne({
-      username,
-    }).select("deliverypartner shopaddress charge");
+    const seller = await Seller.findOne({ username }).select(
+      "deliverypartner shopaddress charge"
+    );
     return seller;
   } catch (error) {
-    return "something went wrong !";
+    throw error;
   }
 };
 
-const LogintoDeliveryRates = async (email, password) => {
-  try {
-    const data = JSON.stringify({
-      email: email,
-      password: password,
-    });
-    const config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: "https://api.nimbuspost.com/v1/users/login",
-      headers: {
-        "content-type": "application/json",
-      },
-      data: data,
-    };
+const loginToDeliveryRates = async (email, password) => {
+  const data = JSON.stringify({ email, password });
+  const config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: "https://api.nimbuspost.com/v1/users/login",
+    headers: { "Content-Type": "application/json" },
+    data,
+  };
 
+  try {
     const response = await axios(config);
     return response.data?.data;
   } catch (error) {
-    return "something went wrong !";
+    throw error;
   }
 };
 
-const CheckServiceForRates = async (req, res, config) => {
-  const {
-    origin,
-    destination,
-    payment_type,
-    order_amount,
-    weight,
-    length,
-    breadth,
-    height,
-    token,
-  } = config;
-  var data = JSON.stringify({
-    origin,
-    destination,
-    payment_type,
-    order_amount,
-    weight,
-    length,
-    breadth,
-    height,
-  });
+const checkServiceForRates = async (config) => {
+  const data = JSON.stringify(config);
+
+  const axiosConfig = {
+    method: "post",
+    url: "https://api.nimbuspost.com/v1/courier/serviceability",
+    data,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.token}`,
+    },
+  };
+
   try {
-    const axiosConfig = {
-      method: "post",
-      url: "https://api.nimbuspost.com/v1/courier/serviceability",
-      data: data,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    };
     const response = await axios(axiosConfig);
-    console.log(response.data);
     return response.data;
   } catch (error) {
-    return error;
-  }
-};
-
-const getDeliveryRates1 = async (req, res, seller) => {
-  try {
-    const sellerDetails = await getSellerDetailsForRates(seller);
-    const { shopaddress, deliverypartner, charge } = sellerDetails;
-    const { email, password, warehouses } = deliverypartner?.partner;
-    const deliveryLogin = await LogintoDeliveryRates(email, password);
-    return {
-      token: deliveryLogin,
-      warehouses,
-      charge,
-      shopaddress,
-      personalDelivery: deliverypartner?.personal,
-    };
-  } catch (error) {
-    res.status(500).send("Something went wrong !");
+    throw error;
   }
 };
 
 const getDeliveryRates = async (req, res) => {
   const { seller, token, config } = req.body;
-  const resp = await CheckServiceForRates(req, res, {
-    ...config,
-    token,
-  });
-  if (resp?.status != true) {
-    const response = await getDeliveryRates1(req, res, seller);
-    const { token, warehouses, charge, shopaddress, personalDelivery } =
-      response;
-    const resp = await CheckServiceForRates(req, res, {
-      ...config,
-      token,
-    });
-    res.success({
-      data: {
-        token,
+
+  try {
+    const sellerDetails = await getSellerDetails(seller);
+    const { shopaddress, deliverypartner, charge } = sellerDetails;
+    const { email, password, warehouses } = deliverypartner?.partner || {};
+    const [deliveryLogin, ratesResp] = await Promise.all([
+      loginToDeliveryRates(email, password),
+      checkServiceForRates({ ...config, token }),
+    ]);
+
+    if (ratesResp?.status === false) {
+      const newToken = await loginToDeliveryRates(email, password);
+      const retryRatesResp = await checkServiceForRates({
+        ...config,
+        token: newToken,
+      });
+
+      const response = {
+        token: newToken,
         warehouses,
         charge,
         shopaddress,
-        rates: resp,
-        personalDelivery,
-      },
-    });
-  } else {
-    res.success({
-      data: {
-        token,
-        rates: resp,
-      },
-    });
+        personalDelivery: deliverypartner?.personal,
+        rates: retryRatesResp,
+      };
+
+      res.status(200).json({ data: response });
+    } else {
+      const response = {
+        token: deliveryLogin,
+        warehouses,
+        charge,
+        shopaddress,
+        personalDelivery: deliverypartner?.personal,
+        rates: ratesResp,
+      };
+
+      res.status(200).json({ data: response });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
