@@ -157,11 +157,11 @@ const getOrder = async (req, res) => {
 const getAllOrdersByUser = async (req, res) => {
   const customerId = req.params.customerId;
   try {
-    const customer = await Order.find({ customerId });
+    // const customer = await Order.find({ customerId });
 
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
+    // if (!customer) {
+    //   return res.status(404).json({ message: "Customer not found" });
+    // }
 
     const orders = await Order.find({ customerId })
       // .populate("customerId", ["firstName", "lastName", "email"])
@@ -174,6 +174,7 @@ const getAllOrdersByUser = async (req, res) => {
           select: ["name", "images", "price"],
         },
       })
+      .sort("-createdAt")
 
       .exec();
 

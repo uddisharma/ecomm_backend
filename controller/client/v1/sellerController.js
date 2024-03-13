@@ -8,10 +8,8 @@ const userSchemaKey = require("../../../utils/validation/userValidation");
 const validation = require("../../../utils/validateRequest");
 const dbService = require("../../../utils/dbService");
 const ObjectId = require("mongodb").ObjectId;
-const auth = require("../../../services/auth");
 const deleteDependentService = require("../../../utils/deleteDependent");
-const utils = require("../../../utils/common");
-const category = require("../../../model/category");
+const axios = require("axios");
 
 const addSeller = async (req, res) => {
   try {
@@ -34,12 +32,46 @@ const addSeller = async (req, res) => {
   }
 };
 
+const loginToDeliveryRates = async (email, password) => {
+  const data = JSON.stringify({ email, password });
+  const config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: "https://api.nimbuspost.com/v1/users/login",
+    headers: { "Content-Type": "application/json" },
+    data,
+  };
+
+  try {
+    const response = await axios(config);
+
+    return response.data?.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const getSellerDetailsForCheckOut = async (req, res) => {
   try {
     const seller = await Seller.findOne({
       username: req.params.username,
-    }).select("deliverypartner shopaddress charge");
-    return res.success({ data: { seller } });
+    }).select("deliverypartner shopaddress charge isActive");
+    const { email, password, warehouses } =
+      seller?.deliverypartner?.partner || {};
+    const token = await loginToDeliveryRates(email, password);
+    const warehouse = warehouses?.filter((e) => {
+      return e?.default == true;
+    })[0];
+    return res.success({
+      data: {
+        warehouse,
+        token,
+        charge: seller.charge,
+        address: seller.shopaddress?.pincode,
+        delivery: seller?.deliverypartner?.personal,
+        storestatus: seller?.isActive,
+      },
+    });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }

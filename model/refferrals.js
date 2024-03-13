@@ -11,6 +11,11 @@ const referralSchema = new mongoose.Schema({
     ref: "seller",
     required: true,
   },
+  amount: {
+    type: Number,
+    default: 0,
+    required: true,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -1,5 +1,30 @@
 const axios = require("axios");
 const Seller = require("../../../model/seller");
+
+function findShipmentComapanyWithLowCharge(data) {
+  if (!data || data.length === 0) {
+    return null;
+  }
+  let minCharge = Number.POSITIVE_INFINITY;
+  let maxCharge = Number.NEGATIVE_INFINITY;
+  let minChargeItem = null;
+  let maxChargeItem = null;
+  for (const item of data) {
+    const freightCharge = item.freight_charges;
+
+    if (freightCharge < minCharge) {
+      minCharge = freightCharge;
+      minChargeItem = item;
+    }
+
+    if (freightCharge > maxCharge) {
+      maxCharge = freightCharge;
+      maxChargeItem = item;
+    }
+  }
+  return minChargeItem;
+}
+
 const Login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -363,7 +388,8 @@ const CheckServiceAndRate = async (req, res) => {
 
     axios(config)
       .then(function (response) {
-        res.send(JSON.stringify(response.data));
+        const data = findShipmentComapanyWithLowCharge(response.data.data);
+        res.send(JSON.stringify({ status: response?.data?.status, data }));
       })
       .catch(function (error) {
         res.send(error);
@@ -568,7 +594,7 @@ const getDeliveryRates = async (req, res) => {
     const { email, password, warehouses } = deliverypartner?.partner || {};
     const [deliveryLogin, ratesResp] = await Promise.all([
       loginToDeliveryRates(email, password),
-      checkServiceForRates({ ...config, token }),
+      checkServiceForRates({ ...config, origin: shopaddress?.pincode, token }),
     ]);
     if (ratesResp?.status === false) {
       const newToken = await loginToDeliveryRates(email, password);
