@@ -562,7 +562,6 @@ const checkServiceForRates = async (config) => {
 
 const getDeliveryRates = async (req, res) => {
   const { seller, token, config } = req.body;
-
   try {
     const sellerDetails = await getSellerDetails(seller);
     const { shopaddress, deliverypartner, charge } = sellerDetails;
@@ -571,14 +570,12 @@ const getDeliveryRates = async (req, res) => {
       loginToDeliveryRates(email, password),
       checkServiceForRates({ ...config, token }),
     ]);
-
     if (ratesResp?.status === false) {
       const newToken = await loginToDeliveryRates(email, password);
       const retryRatesResp = await checkServiceForRates({
         ...config,
         token: newToken,
       });
-
       const response = {
         token: newToken,
         warehouses,
