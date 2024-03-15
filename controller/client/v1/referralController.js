@@ -5,24 +5,33 @@ const User = require("../../../model/user");
 // Create a new referral
 const createReferral = async (req, res) => {
   try {
-    const { referringUserId, referredUserId } = req.body;
+    const { referringUser, referredSeller, amount } = req.body;
 
-    // Check if both users exist
-    const referringUser = await User.findById(referringUserId);
-    const referredUser = await User.findById(referredUserId);
+    const referringUser1 = await User.findById(referringUser);
+    const referredUser = await Seller.findById(referredSeller);
 
     if (!referringUser || !referredUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.recordNotFound();
     }
 
-    // Create a new referral
-    const referral = new Referral({ referringUser, referredUser });
-    await referral.save();
+    const foundReferral = await Referral.findOne({
+      referringUser: referringUser1?._id,
+      referredSeller: referredUser?._id,
+    });
 
-    res.status(201).json(referral);
+    if (foundReferral) {
+      return res.json({ data: { status: "EXIST" } });
+    }
+
+    const referral = new Referral({
+      referringUser: referringUser1?._id,
+      referredSeller: referredUser?._id,
+      amount,
+    });
+    await referral.save();
+    return res.success({ data: referral });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.internalServerError({ message: error.message });
   }
 };
 
@@ -32,10 +41,28 @@ const getAllReferrals = async (req, res) => {
     const referrals = await Referral.find().populate(
       "referringUser referredSeller"
     );
-    res.json(referrals);
+    if (!referrals) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: referrals });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const getAllReferralsofUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const referrals = await Referral.find({ referringUser: id }).populate({
+      path: "referredSeller",
+      select: ["shopname", "username"],
+    });
+    if (!referrals) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: referrals });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
   }
 };
 
@@ -45,41 +72,29 @@ const getReferralById = async (req, res) => {
       "referringUser referredSeller"
     );
     if (!referral) {
-      return res.status(404).json({ error: "Referral not found" });
+      return res.recordNotFound();
     }
-    res.json(referral);
+    return res.success({ data: referral });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.internalServerError({ message: error.message });
   }
 };
 
 // Update a referral by ID
 const updateReferral = async (req, res) => {
   try {
-    const { referringUserId, referredSellerId } = req.body;
-    
-    const referringUser = await User.findById(referringUserId);
-    const referredSeller = await Seller.findById(referredSellerId);
-
-    if (!referringUser || !referredUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
+    const { status } = req.body;
     const referral = await Referral.findByIdAndUpdate(
       req.params.id,
-      { referringUser, referredSeller },
-      { new: true, runValidators: true }
+      { status },
+      { new: true }
     ).populate("referringUser referredSeller");
-
     if (!referral) {
-      return res.status(404).json({ error: "Referral not found" });
+      return res.recordNotFound();
     }
-
-    res.json(referral);
+    return res.success({ data: referral });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.internalServerError({ message: error.message });
   }
 };
 
@@ -88,12 +103,11 @@ const deleteReferral = async (req, res) => {
   try {
     const referral = await Referral.findByIdAndDelete(req.params.id);
     if (!referral) {
-      return res.status(404).json({ error: "Referral not found" });
+      return res.recordNotFound();
     }
-    res.json({ message: "Referral deleted successfully" });
+    return res.success({ data: referral });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.internalServerError({ message: error.message });
   }
 };
 
@@ -104,4 +118,5 @@ module.exports = {
   getReferralById,
   updateReferral,
   deleteReferral,
+  getAllReferralsofUser,
 };
