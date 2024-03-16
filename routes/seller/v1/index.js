@@ -23,5 +23,6 @@ router.use(require("./uploadRoutes"));
 router.use(require("./sellerRoutes"));
 router.use(require("./couponRoutes"));
 router.use(require("./ticketsRoutes"));
+router.use(require("./uploadRoutes1"));
 
 module.exports = router;

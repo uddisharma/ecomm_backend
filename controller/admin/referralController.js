@@ -1,32 +1,30 @@
-const Referral = require("../../../model/refferrals");
-const Seller = require("../../../model/seller");
-const User = require("../../../model/user");
+const Referral = require("../../model/refferrals");
+const Seller = require("../../model/seller");
+const User = require("../../model/user");
+const dbService = require("../../utils/dbService");
 
-// Create a new referral
 const createReferral = async (req, res) => {
   try {
-    const { referringUser, referredSeller, amount } = req.body;
-
+    const { referringUser, referredSeller, amount, onboarded, status } =
+      req.body;
     const referringUser1 = await User.findById(referringUser);
     const referredUser = await Seller.findById(referredSeller);
-
     if (!referringUser || !referredUser) {
       return res.recordNotFound();
     }
-
     const foundReferral = await Referral.findOne({
       referringUser: referringUser1?._id,
       referredSeller: referredUser?._id,
     });
-
     if (foundReferral) {
       return res.json({ data: { status: "EXIST" } });
     }
-
     const referral = new Referral({
       referringUser: referringUser1?._id,
       referredSeller: referredUser?._id,
       amount,
+      onboarded: onboarded ?? false,
+      status: status ?? false,
     });
     await referral.save();
     return res.success({ data: referral });
@@ -38,9 +36,21 @@ const createReferral = async (req, res) => {
 // Get all referrals
 const getAllReferrals = async (req, res) => {
   try {
-    const referrals = await Referral.find().populate(
-      "referringUser referredSeller"
-    );
+    let options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+      sort: "-updatedAt",
+      populate: [
+        { path: "referringUser", select: "name email mobileNo" },
+        { path: "referredSeller", select: "shopname username" },
+      ],
+    };
+    let query = {
+      isDeleted: req.query.isDeleted,
+    };
+    let referrals = await dbService.paginate(Referral, query, options);
+
     if (!referrals) {
       return res.recordNotFound();
     }
@@ -53,15 +63,10 @@ const getAllReferrals = async (req, res) => {
 const getAllReferralsofUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const referrals = await Referral.find({
-      referringUser: id,
-      isDeleted: false,
-    })
-      .populate({
-        path: "referredSeller",
-        select: ["shopname", "username"],
-      })
-      .sort("-updatedAt");
+    const referrals = await Referral.find({ referringUser: id }).populate({
+      path: "referredSeller",
+      select: ["shopname", "username"],
+    });
     if (!referrals) {
       return res.recordNotFound();
     }
@@ -88,12 +93,9 @@ const getReferralById = async (req, res) => {
 // Update a referral by ID
 const updateReferral = async (req, res) => {
   try {
-    const { status } = req.body;
-    const referral = await Referral.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).populate("referringUser referredSeller");
+    const referral = await Referral.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    }).populate("referringUser referredSeller");
     if (!referral) {
       return res.recordNotFound();
     }

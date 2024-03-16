@@ -32,5 +32,6 @@ router.use(require("./transactionRoutes"));
 router.use(require("./ticketsRoutes"));
 router.use(require("./sellerRequestsRoutes"));
 router.use(require("./contactRoutes"));
+router.use(require("./referralRoutes"));
 
 module.exports = router;
