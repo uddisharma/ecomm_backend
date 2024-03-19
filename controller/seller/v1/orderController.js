@@ -448,7 +448,7 @@ const softDeleteManyOrder = async (req, res) => {
 };
 
 const getYearlySellerRevenue = async (req, res) => {
-  const sellerId = req.params.sellerId;
+  const sellerId = req.user.id;
   const requestedYear = req.query.year;
   function getMonthName(monthNumber) {
     const monthNames = [
@@ -509,7 +509,7 @@ const getYearlySellerRevenue = async (req, res) => {
 };
 
 const getYearlySellerOrders = async (req, res) => {
-  const sellerId = req.params.sellerId;
+  const sellerId = req.user.id;
   const requestedYear = req.query.year;
 
   function getMonthName(monthNumber) {

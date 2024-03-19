@@ -339,20 +339,19 @@ const getSellerCount = async (req, res) => {
 
 const updateSeller = async (req, res) => {
   try {
-    // return res?.send(req.body);
     let dataToUpdate = {
       ...req.body,
     };
     const query = {
       _id: {
-        $eq: req.params.id,
+        $eq: req.user.id,
       },
     };
     let updatedSeller = await dbService.updateOne(Seller, query, dataToUpdate);
     if (!updatedSeller) {
       return res.recordNotFound();
     }
-    const seller = await Seller.findById(req.params.id).populate({
+    const seller = await Seller.findById(req.user.id).populate({
       path: "sellingCategory.category",
       select: ["-createdAt", "-updatedAt"],
       populate: {
@@ -410,7 +409,7 @@ const changePassword = async (req, res) => {
     }
     let result = await auth.changePassword({
       ...params,
-      userId: req.params.id,
+      userId: req.user.id,
     });
     if (result.flag) {
       return res.failure({ message: result.data });

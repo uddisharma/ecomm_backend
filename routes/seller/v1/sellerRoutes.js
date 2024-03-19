@@ -26,12 +26,12 @@ router
   .get(sellerController.getSellerDetailsForCheckOut);
 
 router
-  .route("/seller/vi/seller/update/:id")
-  .patch(sellerController.updateSeller);
+  .route("/seller/vi/seller/update")
+  .patch(authenticateJWT(PLATFORM.DEVICE), sellerController.updateSeller);
 
 router
-  .route("/seller/vi/change/password/:id")
-  .patch(sellerController.changePassword);
+  .route("/seller/vi/change/password")
+  .patch(authenticateJWT(PLATFORM.DEVICE), sellerController.changePassword);
 
 router.get("/seller/v1/seller/:id", sellerController?.getSeller);
 

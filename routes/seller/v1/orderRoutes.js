@@ -89,12 +89,15 @@ router
   );
 
 router
-  .route("/seller/api/v1/order/revenue/monthwise/:sellerId")
-  .get(orderController.getYearlySellerRevenue);
+  .route("/seller/api/v1/order/revenue/monthwise")
+  .get(
+    authenticateJWT(PLATFORM.DEVICE),
+    orderController.getYearlySellerRevenue
+  );
 
 router
-  .route("/seller/api/v1/order/orders/monthwise/:sellerId")
-  .get(orderController.getYearlySellerOrders);
+  .route("/seller/api/v1/order/orders/monthwise")
+  .get(authenticateJWT(PLATFORM.DEVICE), orderController.getYearlySellerOrders);
 
 router
   .route("/seller/api/v1/order/revenue/datewise")
