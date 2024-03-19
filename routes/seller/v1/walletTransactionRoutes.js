@@ -7,6 +7,7 @@ const express = require("express");
 const router = express.Router();
 const walletTransactionController = require("../../../controller/seller/v1/walletTransactionController");
 const { PLATFORM } = require("../../../constants/authConstant");
+const authenticateJWT = require("../../../middleware/loginUser");
 const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
 
@@ -94,7 +95,10 @@ router
   );
 
 router
-  .route("/seller/api/v1/wallettransactions/:seller")
-  .get(walletTransactionController.findSellersTransaction);
+  .route("/seller/api/v1/wallettransactions")
+  .get(
+    authenticateJWT(PLATFORM.DEVICE),
+    walletTransactionController.findSellersTransaction
+  );
 
 module.exports = router;

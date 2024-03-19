@@ -1,22 +1,32 @@
 const express = require("express");
 const router = express.Router();
 const ticketController = require("../../../controller/seller/v1/ticketsController");
+const { PLATFORM } = require("../../../constants/authConstant");
+const authenticateJWT = require("../../../middleware/loginUser");
 
-router.post("/seller/vi/seller/ticket/create", ticketController.addTicket);
+router.post(
+  "/seller/vi/seller/ticket/create",
+  authenticateJWT(PLATFORM.DEVICE),
+  ticketController.addTicket
+);
 
 router
-  .route("/seller/vi/seller/tickets/:seller")
-  .get(ticketController.getSellerTickets);
+  .route("/seller/vi/seller/tickets")
+  .get(authenticateJWT(PLATFORM.DEVICE), ticketController.getSellerTickets);
 
-router.patch("/seller/vi/seller/ticket/reply", ticketController.ticketReply);
+router.patch(
+  "/seller/vi/seller/ticket/reply",
+  authenticateJWT(PLATFORM.DEVICE),
+  ticketController.ticketReply
+);
 
 router
   .route("/seller/vi/seller/mark/resolved/:ticketId")
-  .patch(ticketController.markAsResolved);
+  .patch(authenticateJWT(PLATFORM.DEVICE), ticketController.markAsResolved);
 
 router
   .route("/seller/vi/seller/single/ticket/:id")
-  .get(ticketController?.getSingleTicket);
+  .get(authenticateJWT(PLATFORM.DEVICE), ticketController?.getSingleTicket);
 
 router
   .route("/seller/vi/seller/delete/ticket/:ticketId")

@@ -570,7 +570,7 @@ const getYearlySellerOrders = async (req, res) => {
 };
 
 const getTotalSalesForSellerAndDate = async (req, res) => {
-  const sellerId = req.params.sellerId;
+  const sellerId = req.user.id;
   try {
     const pipeline = [
       {

@@ -422,7 +422,7 @@ const findSellersTransaction = async (req, res) => {
       };
     }
     const query = {
-      seller: req.params.seller,
+      seller: req.user.id,
       isDeleted: req.query.isDeleted,
     };
 

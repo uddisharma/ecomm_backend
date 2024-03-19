@@ -3,7 +3,8 @@ const dbService = require("../../../utils/dbService");
 
 exports.addTicket = async (req, res) => {
   try {
-    const { seller, type, subject, description } = req.body;
+    const { type, subject, description } = req.body;
+    const seller = req.user.id;
     const newTicket = new Tickets({
       seller,
       type,
@@ -34,7 +35,8 @@ exports.updateTicket = async (req, res) => {
 
 exports.ticketReply = async (req, res) => {
   try {
-    const { ticketId, from, message, time } = req.body;
+    const { ticketId, message, time } = req.body;
+    const from = req.user.id;
     const updatedTicket = await Tickets.findByIdAndUpdate(
       ticketId,
       {
@@ -127,8 +129,8 @@ exports.getSellerTickets = async (req, res) => {
     };
 
     let query = {
-      seller: req.params.seller,
-      isDeleted:req.query.isDeleted
+      seller: req.user.id,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundProducts = await dbService.paginate(Tickets, query, options);

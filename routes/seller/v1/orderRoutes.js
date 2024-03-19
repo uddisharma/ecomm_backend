@@ -14,11 +14,9 @@ const authenticateJWT = require("../../../middleware/loginUser");
 router
   .route("/seller/api/v1/order/create")
   .post(auth(PLATFORM.DEVICE), checkRolePermission, orderController.addOrder);
-router.route("/seller/api/v1/order/list/").get(
-  authenticateJWT(PLATFORM.DEVICE),
-  // checkRolePermission,
-  orderController.findAllOrder
-);
+router
+  .route("/seller/api/v1/order/list/")
+  .get(authenticateJWT(PLATFORM.DEVICE), orderController.findAllOrder);
 
 router.route("/seller/api/v1/order/deleted/list/:id").get(
   // auth(PLATFORM.DEVICE),
@@ -99,8 +97,11 @@ router
   .get(orderController.getYearlySellerOrders);
 
 router
-  .route("/seller/api/v1/order/revenue/datewise/:sellerId")
-  .get(orderController.getTotalSalesForSellerAndDate);
+  .route("/seller/api/v1/order/revenue/datewise")
+  .get(
+    authenticateJWT(PLATFORM.DEVICE),
+    orderController.getTotalSalesForSellerAndDate
+  );
 
 router
   .route("/seller/api/v1/counts")

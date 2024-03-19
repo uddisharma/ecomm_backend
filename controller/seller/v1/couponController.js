@@ -7,7 +7,7 @@ const ObjectId = require("mongodb").ObjectId;
 
 const addCoupon = async (req, res) => {
   try {
-    let dataToCreate = { ...(req.body || {}) };
+    let dataToCreate = { ...req.body, seller: req.user.id };
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       couponSchemaKey.schemaKeys
@@ -86,11 +86,10 @@ const findSellersCoupons = async (req, res) => {
         limit: Number(req.query.limit),
         skip: (Number(req.query.page) - 1) * Number(req.query.limit),
         sort: { updatedAt: -1 },
-        // populate: [{ path: "seller", select: "username" }],
       };
     }
     const query = {
-      seller: req.params.seller,
+      seller: req.user.id,
       isDeleted: req.query.isDeleted,
     };
 
@@ -147,6 +146,7 @@ const updateCoupon = async (req, res) => {
   try {
     let dataToUpdate = {
       ...req.body,
+      seller: req.user.id,
     };
     let validateRequest = validation.validateParamsWithJoi(
       dataToUpdate,
