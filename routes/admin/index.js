@@ -33,5 +33,6 @@ router.use(require("./ticketsRoutes"));
 router.use(require("./sellerRequestsRoutes"));
 router.use(require("./contactRoutes"));
 router.use(require("./referralRoutes"));
+router.use(require("./uploadRoutes1"));
 
 module.exports = router;

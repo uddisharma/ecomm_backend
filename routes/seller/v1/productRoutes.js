@@ -9,8 +9,10 @@ const productController = require("../../../controller/seller/v1/productControll
 const { PLATFORM } = require("../../../constants/authConstant");
 const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
+const authenticateJWT = require("../../../middleware/loginUser");
 
 router.route("/seller/api/v1/product/create").post(
+  authenticateJWT(PLATFORM.DEVICE),
   // auth(PLATFORM.DEVICE),
   // checkRolePermission,
   productController.addProduct
@@ -94,7 +96,13 @@ router
 // router.get("/seller/product/:id/", productController.getProductById);
 
 router
-  .route("/seller/product/list/:id")
-  .get(productController.findSellersAllProduct);
+  .route("/seller/product/list")
+
+  .get(
+    authenticateJWT(PLATFORM.DEVICE),
+    // auth(PLATFORM.DEVICE),
+    // checkRolePermission,
+    productController.findSellersAllProduct
+  );
 
 module.exports = router;

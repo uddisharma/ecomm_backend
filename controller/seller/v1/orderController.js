@@ -106,7 +106,7 @@ const findAllOrder = async (req, res) => {
       ],
     };
     let query = {
-      sellerId: req.params.id,
+      sellerId: req.user.id,
       date: formattedDate,
       isDeleted: false,
       // createdAt: { $gte: dateStart, $lte: dateEnd },
@@ -610,7 +610,7 @@ const getTotalSalesForSellerAndDate = async (req, res) => {
 
 const getCounts = async (req, res) => {
   try {
-    const seller = mongoose.Types.ObjectId(req.params.seller);
+    const seller = mongoose.Types.ObjectId(req.user.id);
 
     const pipeline = [
       {
@@ -649,7 +649,14 @@ const getCounts = async (req, res) => {
     }
 
     return res.success({
-      data: { revenue, orders, products, coupons, tickets, Categorycount },
+      data: {
+        revenue: Math.ceil(revenue),
+        orders,
+        products,
+        coupons,
+        tickets,
+        Categorycount,
+      },
     });
   } catch (error) {
     return res.internalServerError({ message: error.message });

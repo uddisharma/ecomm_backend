@@ -12,7 +12,7 @@ const utils = require("../../../utils/common");
 
 const addProduct = async (req, res) => {
   try {
-    let dataToCreate = { ...(req.body || {}) };
+    let dataToCreate = { ...req.body, sellerId: req.user.id };
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       productSchemaKey.schemaKeys
@@ -113,7 +113,7 @@ const findSellersAllProduct = async (req, res) => {
     };
 
     let query = {
-      sellerId: req.params.id,
+      sellerId: req.user.id,
       isDeleted: req.query.isDeleted,
     };
 

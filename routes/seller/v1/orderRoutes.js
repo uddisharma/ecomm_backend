@@ -9,12 +9,14 @@ const orderController = require("../../../controller/seller/v1/orderController")
 const { PLATFORM } = require("../../../constants/authConstant");
 const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
+const authenticateJWT = require("../../../middleware/loginUser");
+
 
 router
   .route("/seller/api/v1/order/create")
   .post(auth(PLATFORM.DEVICE), checkRolePermission, orderController.addOrder);
-router.route("/seller/api/v1/order/list/:id").get(
-  // auth(PLATFORM.DEVICE),
+router.route("/seller/api/v1/order/list/").get(
+  authenticateJWT(PLATFORM.DEVICE),
   // checkRolePermission,
   orderController.findAllOrder
 );
@@ -99,7 +101,9 @@ router
   .route("/seller/api/v1/order/revenue/datewise/:sellerId")
   .get(orderController.getTotalSalesForSellerAndDate);
 
-router.route("/seller/api/v1/counts/:seller").get(orderController.getCounts);
+router
+  .route("/seller/api/v1/counts")
+  .get(authenticateJWT(PLATFORM.DEVICE), orderController.getCounts);
 
 router
   .route("/seller/api/v1/last-seven-days/:seller")
