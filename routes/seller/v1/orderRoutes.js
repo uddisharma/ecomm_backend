@@ -11,7 +11,6 @@ const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
 const authenticateJWT = require("../../../middleware/loginUser");
 
-
 router
   .route("/seller/api/v1/order/create")
   .post(auth(PLATFORM.DEVICE), checkRolePermission, orderController.addOrder);
@@ -34,10 +33,12 @@ router
     checkRolePermission,
     orderController.getOrderCount
   );
-router.route("/seller/api/v1/order/:id").get(orderController.getOrder);
+router
+  .route("/seller/api/v1/order/:id")
+  .get(authenticateJWT(PLATFORM.DEVICE), orderController.getOrder);
 router
   .route("/seller/api/v1/order/update/:id")
-  .patch(orderController.updateOrder);
+  .patch(authenticateJWT(PLATFORM.DEVICE), orderController.updateOrder);
 router
   .route("/seller/api/v1/order/partial-update/:id")
   .put(

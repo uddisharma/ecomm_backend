@@ -187,7 +187,9 @@ const findAllSellersForSearch = async (req, res) => {
 
 const addCategory = async (req, res) => {
   try {
-    const { sellerId, category, photo } = req.body;
+    const { category, photo } = req.body;
+
+    const sellerId = req.user.id;
 
     // Validate if the shopId exists
     const existingShop = await Seller.findById(sellerId).populate({
@@ -242,7 +244,8 @@ const addCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
   try {
-    const { sellerId, categoryId } = req.params;
+    const { categoryId } = req.params;
+    const sellerId = req.user.id;
     const existingShop = await Seller.findById(sellerId).populate({
       path: "sellingCategory.category",
       select: ["-createdAt", "-updatedAt"],

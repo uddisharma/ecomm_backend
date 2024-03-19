@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const sellerController = require("../../../controller/seller/v1/sellerController");
+const authenticateJWT = require("../../../middleware/loginUser");
+const { PLATFORM } = require("../../../constants/authConstant");
 
 router.post("/seller/vi/seller/create", sellerController.addSeller);
 
@@ -33,10 +35,15 @@ router
 
 router.get("/seller/v1/seller/:id", sellerController?.getSeller);
 
-router.patch("/seller/v1/add-category", sellerController?.addCategory);
+router.patch(
+  "/seller/v1/add-category",
+  authenticateJWT(PLATFORM.DEVICE),
+  sellerController?.addCategory
+);
 
 router.delete(
-  "/seller/v1/delete-category/:sellerId/:categoryId",
+  "/seller/v1/delete-category/:categoryId",
+  authenticateJWT(PLATFORM.DEVICE),
   sellerController?.deleteCategory
 );
 

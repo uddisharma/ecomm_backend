@@ -11,12 +11,9 @@ const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
 const authenticateJWT = require("../../../middleware/loginUser");
 
-router.route("/seller/api/v1/product/create").post(
-  authenticateJWT(PLATFORM.DEVICE),
-  // auth(PLATFORM.DEVICE),
-  // checkRolePermission,
-  productController.addProduct
-);
+router
+  .route("/seller/api/v1/product/create")
+  .post(authenticateJWT(PLATFORM.DEVICE), productController.addProduct);
 router
   .route("/seller/api/v1/product/list")
   .post(
@@ -27,6 +24,7 @@ router
 
 router.get(
   "/seller/api/v1/seller/product/list/:id",
+  authenticateJWT(PLATFORM.DEVICE),
   productController.findSellersAllProduct
 );
 
@@ -38,15 +36,13 @@ router
     productController.getProductCount
   );
 router.route("/seller/api/v1/product/:id").get(
-  // auth(PLATFORM.DEVICE),
-  // checkRolePermission,
+  authenticateJWT(PLATFORM.DEVICE),
+
   productController.getProduct
 );
-router.route("/seller/api/v1/product/update/:id").patch(
-  // auth(PLATFORM.DEVICE),
-  // checkRolePermission,
-  productController.updateProduct
-);
+router
+  .route("/seller/api/v1/product/update/:id")
+  .patch(authenticateJWT(PLATFORM.DEVICE), productController.updateProduct);
 router
   .route("/seller/api/v1/product/partial-update/:id")
   .put(
@@ -54,11 +50,9 @@ router
     checkRolePermission,
     productController.partialUpdateProduct
   );
-router.route("/seller/api/v1/product/softDelete/:id").patch(
-  // auth(PLATFORM.DEVICE),
-  // checkRolePermission,
-  productController.softDeleteProduct
-);
+router
+  .route("/seller/api/v1/product/softDelete/:id")
+  .patch(authenticateJWT(PLATFORM.DEVICE), productController.softDeleteProduct);
 router
   .route("/seller/api/v1/product/softDeleteMany")
   .put(
@@ -80,11 +74,10 @@ router
     checkRolePermission,
     productController.bulkUpdateProduct
   );
-router.route("/seller/api/v1/product/delete/:id").delete(
-  // auth(PLATFORM.DEVICE),
-  // checkRolePermission,
-  productController.deleteProduct
-);
+router
+  .route("/seller/api/v1/product/delete/:id")
+  .delete(authenticateJWT(PLATFORM.DEVICE), productController.deleteProduct);
+  
 router
   .route("/seller/api/v1/product/deleteMany")
   .post(
@@ -97,11 +90,8 @@ router
 
 router
   .route("/seller/product/list")
-
   .get(
     authenticateJWT(PLATFORM.DEVICE),
-    // auth(PLATFORM.DEVICE),
-    // checkRolePermission,
     productController.findSellersAllProduct
   );
 

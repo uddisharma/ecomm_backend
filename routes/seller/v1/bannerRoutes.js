@@ -8,11 +8,12 @@ const router = express.Router();
 const bannerController = require("../../../controller/seller/v1/bannerController");
 const { PLATFORM } = require("../../../constants/authConstant");
 const auth = require("../../../middleware/auth");
+const authenticateJWT = require("../../../middleware/loginUser");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
 
 router
   .route("/seller/api/v1/banner/create")
-  .post(auth(PLATFORM.DEVICE), checkRolePermission, bannerController.addBanner);
+  .post(authenticateJWT(PLATFORM.DEVICE), bannerController.addBanner);
 router
   .route("/seller/api/v1/banner/list")
   .post(
@@ -32,11 +33,7 @@ router
   .get(auth(PLATFORM.DEVICE), checkRolePermission, bannerController.getBanner);
 router
   .route("/seller/api/v1/banner/update/:id")
-  .put(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
-    bannerController.updateBanner
-  );
+  .patch(authenticateJWT(PLATFORM.DEVICE), bannerController.updateBanner);
 router
   .route("/seller/api/v1/banner/partial-update/:id")
   .put(
@@ -46,11 +43,7 @@ router
   );
 router
   .route("/seller/api/v1/banner/softDelete/:id")
-  .put(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
-    bannerController.softDeleteBanner
-  );
+  .patch(authenticateJWT(PLATFORM.DEVICE), bannerController.softDeleteBanner);
 router
   .route("/seller/api/v1/banner/softDeleteMany")
   .put(
@@ -74,11 +67,7 @@ router
   );
 router
   .route("/seller/api/v1/banner/delete/:id")
-  .delete(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
-    bannerController.deleteBanner
-  );
+  .delete(authenticateJWT(PLATFORM.DEVICE), bannerController.deleteBanner);
 router
   .route("/seller/api/v1/banner/deleteMany")
   .post(
@@ -86,5 +75,9 @@ router
     checkRolePermission,
     bannerController.deleteManyBanner
   );
+
+router
+  .route("/sellers/sellers/banner/list")
+  .get(authenticateJWT(PLATFORM.DEVICE), bannerController.findAllSellersBanner);
 
 module.exports = router;
