@@ -240,12 +240,7 @@ const bulkUpdateProduct = async (req, res) => {
   }
 };
 
-/**
- * @description : partially update document of Product with data by id;
- * @param {obj} req : request including id in request params and data in request body.
- * @param {obj} res : response of updated Product.
- * @return {obj} : updated Product. {status, message, data}
- */
+
 const partialUpdateProduct = async (req, res) => {
   try {
     if (!req.params.id) {
