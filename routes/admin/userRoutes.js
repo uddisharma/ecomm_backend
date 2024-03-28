@@ -9,17 +9,24 @@ const userController = require("../../controller/admin/userController");
 const { PLATFORM } = require("../../constants/authConstant");
 const auth = require("../../middleware/auth");
 const checkRolePermission = require("../../middleware/checkRolePermission");
+const authenticateJWT = require("../../middleware/loginUser");
 
 router
   .route("/admin/user/me")
   .get(auth(PLATFORM.ADMIN), userController.getLoggedInUserInfo);
 router.route("/admin/user/create").post(userController.addUser);
-router.route("/admin/user/list").get(userController.findAllUser);
+router
+  .route("/admin/user/list")
+  .get(authenticateJWT(PLATFORM.ADMIN), userController.findAllUser);
 router
   .route("/admin/user/count")
   .post(auth(PLATFORM.ADMIN), checkRolePermission, userController.getUserCount);
-router.route("/admin/singleuser/:id").get(userController.getUser);
-router.route("/admin/user/update/:id").patch(userController.updateUser);
+router
+  .route("/admin/singleuser/:id")
+  .get(authenticateJWT(PLATFORM.ADMIN), userController.getUser);
+router
+  .route("/admin/user/update/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), userController.updateUser);
 router
   .route("/admin/user/partial-update/:id")
   .put(
@@ -68,6 +75,8 @@ router
   .route("/admin/user/update-profile")
   .put(auth(PLATFORM.ADMIN), userController.updateProfile);
 
-router.route("/admin/user/find/queryuser").get(userController?.findSingleUser);
+router
+  .route("/admin/user/find/queryuser")
+  .get(authenticateJWT(PLATFORM.ADMIN), userController?.findSingleUser);
 
 module.exports = router;

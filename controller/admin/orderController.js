@@ -145,12 +145,6 @@ const findAllOrder = async (req, res) => {
 const getAllOrdersByUser = async (req, res) => {
   const customerId = req.params.customerId;
   try {
-    const customer = await Order.find({ customerId });
-
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
-
     const orders = await Order.find({ customerId })
       // .populate("customerId", ["firstName", "lastName", "email"])
       .populate("sellerId", ["shopname", "username"])
@@ -162,6 +156,7 @@ const getAllOrdersByUser = async (req, res) => {
           select: ["name", "images", "price"],
         },
       })
+      .sort({ createdAt: -1 })
       .exec();
 
     res.status(200).json(orders);
@@ -172,20 +167,41 @@ const getAllOrdersByUser = async (req, res) => {
 };
 
 const getOrder = async (req, res) => {
+  const orderId = req.params.id;
+
   try {
-    let query = {};
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.validationError({ message: "invalid objectId." });
+    const order = await Order.findById(orderId)
+      .populate("customerId", ["name", "mobileNo", "email", "shippingAddress"])
+      .populate("sellerId", [
+        "shopname",
+        "username",
+        "profile",
+        "email",
+        "shopaddress",
+        "mobileNo",
+        "deliverypartner.personal.name",
+      ])
+      .populate({
+        path: "orderItems",
+        populate: {
+          path: "productId",
+          model: "product",
+          select: ["name", "images", "price"],
+        },
+      })
+      .select("-isDeleted")
+      .select("-charge")
+
+      .exec();
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
-    query._id = req.params.id;
-    let options = {};
-    let foundOrder = await dbService.findOne(Order, query, options);
-    if (!foundOrder) {
-      return res.recordNotFound();
-    }
-    return res.success({ data: foundOrder });
+
+    res.status(200).json(order);
   } catch (error) {
-    return res.internalServerError({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

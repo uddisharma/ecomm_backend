@@ -35,7 +35,11 @@ router
   );
 router
   .route("/admin/order/:id")
-  .get(auth(PLATFORM.ADMIN), checkRolePermission, orderController.getOrder);
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    checkRolePermission,
+    orderController.getOrder
+  );
 router
   .route("/admin/order/update/:id")
   .put(auth(PLATFORM.ADMIN), checkRolePermission, orderController.updateOrder);
@@ -85,7 +89,11 @@ router
     orderController.deleteManyOrder
   );
 
-router.get("/admin/order/user/:customerId", orderController.getAllOrdersByUser);
+router.get(
+  "/admin/order/user/:customerId",
+  authenticateJWT(PLATFORM.ADMIN),
+  orderController.getAllOrdersByUser
+);
 
 router.get(
   "/admin/stats/count",
