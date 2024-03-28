@@ -9,6 +9,7 @@ const orderController = require("../../controller/admin/orderController");
 const { PLATFORM } = require("../../constants/authConstant");
 const auth = require("../../middleware/auth");
 const checkRolePermission = require("../../middleware/checkRolePermission");
+const authenticateJWT = require("../../middleware/loginUser");
 
 router
   .route("/admin/order/create")
@@ -86,18 +87,25 @@ router
 
 router.get("/admin/order/user/:customerId", orderController.getAllOrdersByUser);
 
-router.get("/admin/stats/count", orderController?.getCounts);
+router.get(
+  "/admin/stats/count",
+  authenticateJWT(PLATFORM.ADMIN),
+  orderController?.getCounts
+);
 
 router
   .route("/admin/order/revenue/datewise")
-  .get(orderController.getTotalSalesForSellerAndDate);
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    orderController.getTotalSalesForSellerAndDate
+  );
 
 router
   .route("/admin/order/revenue/monthwise")
-  .get(orderController.getYearlySellerRevenue);
+  .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerRevenue);
 
 router
   .route("/admin/order/orders/monthwise")
-  .get(orderController.getYearlySellerOrders);
+  .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerOrders);
 
 module.exports = router;

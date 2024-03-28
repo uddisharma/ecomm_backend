@@ -2,22 +2,37 @@ const express = require("express");
 const router = express.Router();
 const sellerController = require("../../controller/admin/sellerController");
 router.post("/admin/seller/create", sellerController.addSeller);
+const authenticateJWT = require("../../middleware/loginUser");
+const { PLATFORM } = require("../../constants/authConstant");
 
-router.route("/admin/seller/list").get(sellerController.findAllSellers);
+router
+  .route("/admin/seller/list")
+  .get(authenticateJWT(PLATFORM.ADMIN), sellerController.findAllSellers);
 
 router
   .route("/admin/seller/pending/list")
-  .get(sellerController.findAllSellersWithPendingOnboarding);
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    sellerController.findAllSellersWithPendingOnboarding
+  );
 
-router.route("/admin/seller/find").get(sellerController?.findSingleSeller);
+router
+  .route("/admin/seller/find")
+  .get(authenticateJWT(PLATFORM.ADMIN), sellerController?.findSingleSeller);
 
 router
   .route("/admin/seller/find/pending")
-  .get(sellerController?.findSingleSellerWithPendingOnboarding);
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    sellerController?.findSingleSellerWithPendingOnboarding
+  );
 
 router
   .route("/admin/seller/deleted/list")
-  .get(sellerController?.findAllSellersWithDeleted);
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    sellerController?.findAllSellersWithDeleted
+  );
 
 router
   .route("/admin/seller/find/deleted")
@@ -40,7 +55,13 @@ router
   .route("/admin/seller/:username")
   .get(sellerController.getSellerDetailsForCheckOut);
 
-router.route("/admin/seller/update/:id").patch(sellerController.updateSeller);
+router
+  .route("/admin/seller/update/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), sellerController.updateSeller);
+
+router
+  .route("/admin/seller/delete/:id")
+  .delete(authenticateJWT(PLATFORM.ADMIN), sellerController.deleteSeller1);
 
 router
   .route("/admin/seller/all/update")

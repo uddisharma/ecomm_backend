@@ -127,7 +127,7 @@ const login = async (req, res) => {
         const userData = user.toJSON();
         const token = await generateToken(
           userData,
-          authConstant.JWT.DEVICE_SECRET
+          authConstant.JWT.ADMIN_SECRET
         );
         return res.success({
           data: { ...userData, token },

@@ -309,7 +309,7 @@ const findSingleSeller = async (req, res) => {
         { username: { $regex: searchTerm, $options: "i" } },
       ],
       isDeleted: false,
-    }).select("shopname username");
+    }).select("shopname username isOnboarded isActive isDeleted");
     if (sellers?.length <= 0) {
       return res.recordNotFound();
     }
@@ -612,7 +612,6 @@ const deleteSeller = async (req, res) => {
     const query = {
       _id: {
         $eq: req.params.id,
-        $ne: req.user.id,
       },
     };
     let deletedSeller;
@@ -702,4 +701,5 @@ module.exports = {
   updateAllSellers,
   findAllSellersWithDeleted,
   findSingleSellerWithdeleted,
+  deleteSeller,
 };
