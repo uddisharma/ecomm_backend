@@ -16,7 +16,6 @@ const si = require("systeminformation");
 const swaggerUi = require("swagger-ui-express");
 const FormData = require("form-data");
 require("./config/db");
-const listEndpoints = require("express-list-endpoints");
 const passport = require("passport");
 
 let logger = require("morgan");

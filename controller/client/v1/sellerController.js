@@ -59,13 +59,15 @@ const getSellerDetailsForCheckOut = async (req, res) => {
     const { email, password, warehouses } =
       seller?.deliverypartner?.partner || {};
     const token = await loginToDeliveryRates(email, password);
+    // console.log(token, "token", email, password);
+
     const warehouse = warehouses?.filter((e) => {
       return e?.default == true;
     })[0];
     return res.success({
       data: {
-        warehouse,
-        token,
+        warehouse: warehouse,
+        token: token,
         charge: seller.charge,
         address: seller.shopaddress?.pincode,
         delivery: seller?.deliverypartner?.personal,

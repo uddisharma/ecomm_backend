@@ -11,7 +11,6 @@ router.use(require("./productRoutes"));
 router.use(require("./categoryRoutes"));
 router.use(require("./orderRoutes"));
 router.use(require("./bannerRoutes"));
-router.use(require("./cartRoutes"));
 router.use(require("./countryRoutes"));
 router.use(require("./cityRoutes"));
 router.use(require("./pincodeRoutes"));

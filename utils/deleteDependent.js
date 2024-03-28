@@ -8,7 +8,6 @@ let Product = require("../model/product");
 let Category = require("../model/category");
 let Order = require("../model/order");
 let Banner = require("../model/banner");
-let Cart = require("../model/cart");
 let Country = require("../model/country");
 let City = require("../model/city");
 let Pincode = require("../model/pincode");
@@ -62,10 +61,6 @@ const deleteUser = async (filter) => {
       };
       const bannerCnt = await dbService.deleteMany(Banner, bannerFilter);
 
-      const cartFilter = {
-        $or: [{ addedBy: { $in: user } }, { updatedBy: { $in: user } }],
-      };
-      const cartCnt = await dbService.deleteMany(Cart, cartFilter);
 
       const countryFilter = {
         $or: [{ addedBy: { $in: user } }, { updatedBy: { $in: user } }],

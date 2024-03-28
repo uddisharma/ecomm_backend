@@ -4,11 +4,12 @@
  */
 
 const Order = require("../../../model/order");
+const Product = require("../../../model/product");
 const orderSchemaKey = require("../../../utils/validation/orderValidation");
 const validation = require("../../../utils/validateRequest");
 const dbService = require("../../../utils/dbService");
 const ObjectId = require("mongodb").ObjectId;
-const utils = require("../../../utils/common");
+const mongoose = require("mongoose");
 
 /**
  * @description : create document of Order in mongodb collection.
@@ -16,6 +17,7 @@ const utils = require("../../../utils/common");
  * @param {Object} res : response of created document
  * @return {Object} : created Order. {status, message, data}
  */
+
 const addOrder = async (req, res) => {
   try {
     let dataToCreate = { ...(req.body || {}) };
@@ -28,11 +30,20 @@ const addOrder = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
-    // dataToCreate.addedBy = req.user.id;
+
     dataToCreate = new Order(dataToCreate);
     let createdOrder = await dbService.create(Order, dataToCreate);
+
+    for (const item of dataToCreate.orderItems) {
+      await Product.updateOne(
+        { _id: item.productId },
+        { $inc: { stock: -item.quantity } }
+      );
+    }
+
     return res.success({ data: createdOrder });
   } catch (error) {
+    console.log(error);
     return res.internalServerError({ message: error.message });
   }
 };

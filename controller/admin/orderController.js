@@ -444,14 +444,7 @@ const softDeleteManyOrder = async (req, res) => {
 
 const getCounts = async (req, res) => {
   try {
-    // const seller = mongoose.Types.ObjectId(req.params.seller);
-
     const pipeline = [
-      // {
-      //   $match: {
-      //     sellerId: mongoose.Types.ObjectId(seller),
-      //   },
-      // },
       {
         $group: {
           _id: null,
