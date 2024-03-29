@@ -14,11 +14,9 @@ const authenticateJWT = require("../../middleware/loginUser");
 router
   .route("/admin/order/create")
   .post(auth(PLATFORM.ADMIN), checkRolePermission, orderController.addOrder);
-router.route("/admin/order/list").get(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  orderController.findAllOrder
-);
+router
+  .route("/admin/order/list")
+  .get(authenticateJWT(PLATFORM.ADMIN), orderController.findAllOrder);
 router
   .route("/admin/order/count")
   .post(
