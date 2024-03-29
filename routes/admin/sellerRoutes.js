@@ -74,7 +74,9 @@ router.delete(
   sellerController?.deleteCategory
 );
 
-router.route("/admin/seller/seller/:id").get(sellerController.getSeller);
+router
+  .route("/admin/seller/seller/:id")
+  .get(authenticateJWT(PLATFORM.ADMIN), sellerController.getSeller);
 
 router
   .route("/admin/add/category")

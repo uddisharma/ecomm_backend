@@ -40,7 +40,11 @@ router
   );
 router
   .route("/admin/order/update/:id")
-  .put(auth(PLATFORM.ADMIN), checkRolePermission, orderController.updateOrder);
+  .patch(
+    authenticateJWT(PLATFORM.ADMIN),
+    checkRolePermission,
+    orderController.updateOrder
+  );
 router
   .route("/admin/order/partial-update/:id")
   .put(
@@ -48,11 +52,9 @@ router
     checkRolePermission,
     orderController.partialUpdateOrder
   );
-router.route("/admin/order/softDelete/:id").patch(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  orderController.softDeleteOrder
-);
+router
+  .route("/admin/order/softDelete/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), orderController.softDeleteOrder);
 router
   .route("/admin/order/softDeleteMany")
   .put(
@@ -74,11 +76,9 @@ router
     checkRolePermission,
     orderController.bulkUpdateOrder
   );
-router.route("/admin/order/delete/:id").delete(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  orderController.deleteOrder
-);
+router
+  .route("/admin/order/delete/:id")
+  .delete(authenticateJWT(PLATFORM.ADMIN), orderController.deleteOrder);
 router
   .route("/admin/order/deleteMany")
   .post(
@@ -137,5 +137,16 @@ router
 router
   .route("/admin/seller/order/orders/monthwise/:id")
   .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerOrders1);
+
+router
+  .route("/admin/seller/order/list/:id")
+  .get(authenticateJWT(PLATFORM.ADMIN), orderController.findSellerAllOrder);
+
+router
+  .route("/admin/seller/order/deleted/list/:id")
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    orderController.findAllDeletedSellerOrder
+  );
 
 module.exports = router;

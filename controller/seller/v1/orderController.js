@@ -135,26 +135,6 @@ const findAllOrder = async (req, res) => {
 
 const findAllDeletedOrder = async (req, res) => {
   try {
-    // const requestedDate = new Date(req.query.date);
-
-    // function formatDate(dateString) {
-    //   const dateParts = dateString.split("-");
-    //   const formattedDate =
-    //     dateParts[1] + "/" + dateParts[2] + "/" + dateParts[0];
-    //   return formattedDate;
-    // }
-    // const formattedDate = formatDate(req.query.date);
-
-    // if (isNaN(requestedDate.getTime())) {
-    //   return res.status(400).json({ error: "Invalid date format" });
-    // }
-
-    // const dateStart = new Date(requestedDate);
-    // dateStart.setHours(0, 0, 0, 0);
-
-    // const dateEnd = new Date(requestedDate);
-    // dateEnd.setHours(23, 59, 59, 999);
-
     let options = {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
@@ -170,7 +150,6 @@ const findAllDeletedOrder = async (req, res) => {
     let query = {
       sellerId: req.params.id,
       isDeleted: true,
-      // createdAt: { $gte: dateStart, $lte: dateEnd },
     };
 
     if (req.query?.status && req.query.status !== "All") {
