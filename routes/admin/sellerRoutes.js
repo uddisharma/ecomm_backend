@@ -40,6 +40,7 @@ router
 
 router.get(
   "/admin/seller/categories/:seller",
+  authenticateJWT(PLATFORM.ADMIN),
   sellerController.getSellingCategoryofSeller
 );
 
@@ -69,9 +70,14 @@ router
 
 router.delete(
   "/admin/seller/delete-category/:sellerId/:categoryId",
+  authenticateJWT(PLATFORM.ADMIN),
   sellerController?.deleteCategory
 );
 
 router.route("/admin/seller/seller/:id").get(sellerController.getSeller);
+
+router
+  .route("/admin/add/category")
+  .patch(authenticateJWT(PLATFORM.ADMIN), sellerController.addCategory);
 
 module.exports = router;

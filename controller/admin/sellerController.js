@@ -679,6 +679,54 @@ const updateSellerProfile = async (req, res) => {
   }
 };
 
+const addCategory = async (req, res) => {
+  try {
+    const { category, photo, sellerId } = req.body;
+
+    const existingShop = await Seller.findById(sellerId).populate({
+      path: "sellingCategory.category",
+      select: ["-createdAt", "-updatedAt"],
+      populate: {
+        path: "parentCategoryId",
+        select: ["-createdAt", "-updatedAt"],
+        populate: {
+          path: "parentCategoryId",
+          select: ["-createdAt", "-updatedAt"],
+        },
+      },
+    });
+
+    if (!existingShop) {
+      return res.status(404).json({ error: "Shop not found" });
+    }
+    const password = existingShop?.password;
+    const newSellingCategory = {
+      category,
+      photo,
+    };
+    existingShop.sellingCategory.push(newSellingCategory);
+    existingShop.password = password;
+    await existingShop.save();
+
+    const seller = await Seller.findById(existingShop?._id).populate({
+      path: "sellingCategory.category",
+      select: ["-createdAt", "-updatedAt"],
+      populate: {
+        path: "parentCategoryId",
+        select: ["-createdAt", "-updatedAt"],
+        populate: {
+          path: "parentCategoryId",
+          select: ["-createdAt", "-updatedAt"],
+        },
+      },
+    });
+
+    return res.success({ data: "success" });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addSeller,
   findAllSellers,
@@ -702,4 +750,5 @@ module.exports = {
   findAllSellersWithDeleted,
   findSingleSellerWithdeleted,
   deleteSeller,
+  addCategory,
 };

@@ -6,7 +6,6 @@
 const express = require("express");
 const router = express.Router();
 const bannerController = require("../../controller/admin/bannerController");
-
 const auth = require("../../middleware/auth");
 const checkRolePermission = require("../../middleware/checkRolePermission");
 const { PLATFORM } = require("../../constants/authConstant");
@@ -27,7 +26,7 @@ router
 
 router
   .route("/admin/sellers/banner/list/:sellerId")
-  .get(bannerController.findAllSellersBanner);
+  .get(authenticateJWT(PLATFORM.ADMIN), bannerController.findAllSellersBanner);
 
 router
   .route("/admin/banner/count")
@@ -36,7 +35,9 @@ router
     checkRolePermission,
     bannerController.getBannerCount
   );
-router.route("/admin/banner/:id").get(bannerController.getBanner);
+router
+  .route("/admin/banner/:id")
+  .get(authenticateJWT(PLATFORM.ADMIN), bannerController.getBanner);
 
 router
   .route("/admin/banner/update/:id")
