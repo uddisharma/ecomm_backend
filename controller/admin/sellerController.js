@@ -246,7 +246,13 @@ const findAllSellers = async (req, res) => {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
+      select: [
+        "-legal",
+        "-deliverypartner",
+        "-resetPasswordLink",
+        "-owner",
+        "-charge",
+      ],
     };
     let query = { isDeleted: false };
 

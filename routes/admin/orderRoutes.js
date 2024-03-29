@@ -6,9 +6,9 @@
 const express = require("express");
 const router = express.Router();
 const orderController = require("../../controller/admin/orderController");
-const { PLATFORM } = require("../../constants/authConstant");
 const auth = require("../../middleware/auth");
 const checkRolePermission = require("../../middleware/checkRolePermission");
+const { PLATFORM } = require("../../constants/authConstant");
 const authenticateJWT = require("../../middleware/loginUser");
 
 router
@@ -99,6 +99,12 @@ router.get(
   orderController?.getCounts
 );
 
+router.get(
+  "/admin/seller/stats/count/:id",
+  authenticateJWT(PLATFORM.ADMIN),
+  orderController?.getSellerCounts
+);
+
 router
   .route("/admin/order/revenue/datewise")
   .get(
@@ -107,11 +113,29 @@ router
   );
 
 router
+  .route("/admin/seller/order/revenue/datewise/:id")
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    orderController.getTotalSalesForSellerAndDate1
+  );
+
+router
   .route("/admin/order/revenue/monthwise")
   .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerRevenue);
 
 router
+  .route("/admin/seller/order/revenue/monthwise/:id")
+  .get(
+    authenticateJWT(PLATFORM.ADMIN),
+    orderController.getYearlySellerRevenue1
+  );
+
+router
   .route("/admin/order/orders/monthwise")
   .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerOrders);
+
+router
+  .route("/admin/seller/order/orders/monthwise/:id")
+  .get(authenticateJWT(PLATFORM.ADMIN), orderController.getYearlySellerOrders1);
 
 module.exports = router;

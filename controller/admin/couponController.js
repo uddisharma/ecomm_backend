@@ -42,7 +42,7 @@ const applyCoupon = async (req, res) => {
       code,
       seller: seller._id,
     });
-    
+
     if (!coupon) {
       return res.json({ status: "FAILED", message: "Invalid Coupon" });
     }
@@ -87,10 +87,12 @@ const findSellersCoupons = async (req, res) => {
         limit: Number(req.query.limit),
         skip: (Number(req.query.page) - 1) * Number(req.query.limit),
         populate: [{ path: "seller", select: "username" }],
+        sort: "-updatedAt",
       };
     }
     const query = {
       seller: req.params.seller,
+      isDeleted: req.query.isDeleted,
     };
 
     let foundCoupons = await dbService.paginate(Coupon, query, options);

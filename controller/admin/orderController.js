@@ -13,6 +13,7 @@ const Seller = require("../../model/seller");
 const Products = require("../../model/product");
 const Coupons = require("../../model/coupons");
 const Tickets = require("../../model/tickets");
+const mongoose = require("mongoose");
 
 /**
  * @description : create document of Order in mongodb collection.
@@ -504,11 +505,105 @@ const getCounts = async (req, res) => {
   }
 };
 
+const getSellerCounts = async (req, res) => {
+  try {
+    const seller = mongoose.Types.ObjectId(req.params.id);
+
+    const pipeline = [
+      {
+        $match: {
+          sellerId: mongoose.Types.ObjectId(seller),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$totalAmount" },
+          charges: { $sum: "$charge" },
+          numberOfOrders: { $sum: 1 },
+        },
+      },
+    ];
+    const result = await dbService.aggregate(Order, pipeline);
+
+    const revenue =
+      (result.length > 0 ? result[0].totalSales : 0) -
+      (result?.length > 0 ? result[0].charges : 0);
+
+    const orders = result.length > 0 ? result[0].numberOfOrders : 0;
+
+    const products = await Products.countDocuments({ sellerId: seller });
+
+    const coupons = await Coupons.countDocuments({ seller: seller });
+
+    const tickets = await Tickets.countDocuments({ seller: seller });
+
+    const categories = await Seller.findOne({ seller: seller });
+
+    let Categorycount = 0;
+    if (categories) {
+      Categorycount = categories?.sellingCategory?.length;
+    }
+
+    return res.success({
+      data: {
+        revenue: Math.ceil(revenue),
+        orders,
+        products,
+        coupons,
+        tickets,
+        Categorycount,
+      },
+    });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 const getTotalSalesForSellerAndDate = async (req, res) => {
   try {
     const pipeline = [
       {
         $match: {
+          date: req.query.date,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$totalAmount" },
+          charges: { $sum: "$charge" },
+          numberOfOrders: { $sum: 1 },
+        },
+      },
+    ];
+
+    const result = await dbService.aggregate(Order, pipeline);
+
+    const revenue =
+      (result.length > 0 ? result[0].totalSales : 0) -
+      (result?.length > 0 ? result[0].charges : 0);
+
+    return res.success({
+      data: {
+        sales: result.length > 0 ? result[0].totalSales : 0,
+        orders: result.length > 0 ? result[0].numberOfOrders : 0,
+        charge: result?.length > 0 ? result[0].charges : 0,
+        revenue: revenue,
+      },
+    });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const getTotalSalesForSellerAndDate1 = async (req, res) => {
+  const sellerId = req.params.id;
+  try {
+    const pipeline = [
+      {
+        $match: {
+          sellerId: mongoose.Types.ObjectId(sellerId),
           date: req.query.date,
         },
       },
@@ -565,6 +660,67 @@ const getYearlySellerRevenue = async (req, res) => {
     const revenueData = await Order.aggregate([
       {
         $match: {
+          createdAt: {
+            $gte: new Date(`${requestedYear}-01-01`),
+            $lt: new Date(`${Number(requestedYear) + 1}-01-01`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalRevenue: { $sum: "$totalAmount" },
+        },
+      },
+    ]);
+
+    const allMonthsData = Array.from({ length: 12 }, (_, index) => ({
+      month: getMonthName(index + 1),
+      totalRevenue: 0,
+    }));
+
+    revenueData.forEach((entry) => {
+      const monthIndex = entry._id - 1;
+      allMonthsData[monthIndex] = {
+        _id: entry._id,
+        month: getMonthName(entry._id),
+        totalRevenue: entry.totalRevenue,
+      };
+    });
+
+    res.json(allMonthsData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+};
+
+const getYearlySellerRevenue1 = async (req, res) => {
+  const sellerId = req.params.id;
+  const requestedYear = req.query.year;
+  function getMonthName(monthNumber) {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[monthNumber - 1];
+  }
+
+  try {
+    const revenueData = await Order.aggregate([
+      {
+        $match: {
+          sellerId: mongoose.Types.ObjectId(sellerId),
           createdAt: {
             $gte: new Date(`${requestedYear}-01-01`),
             $lt: new Date(`${Number(requestedYear) + 1}-01-01`),
@@ -659,6 +815,67 @@ const getYearlySellerOrders = async (req, res) => {
   }
 };
 
+const getYearlySellerOrders1 = async (req, res) => {
+  const sellerId = req.params.id;
+  const requestedYear = req.query.year;
+
+  function getMonthName(monthNumber) {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[monthNumber - 1];
+  }
+
+  try {
+    const ordersCountData = await Order.aggregate([
+      {
+        $match: {
+          sellerId: mongoose.Types.ObjectId(sellerId),
+          createdAt: {
+            $gte: new Date(`${requestedYear}-01-01`),
+            $lt: new Date(`${Number(requestedYear) + 1}-01-01`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalOrders: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const allMonthsData = Array.from({ length: 12 }, (_, index) => ({
+      month: getMonthName(index + 1),
+      totalOrders: 0,
+    }));
+
+    ordersCountData.forEach((entry) => {
+      const monthIndex = entry._id - 1;
+      allMonthsData[monthIndex] = {
+        _id: entry._id,
+        month: getMonthName(entry._id),
+        totalOrders: entry.totalOrders,
+      };
+    });
+    res.json(allMonthsData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
+  }
+};
+
 module.exports = {
   addOrder,
   bulkInsertOrder,
@@ -678,4 +895,8 @@ module.exports = {
   getCounts,
   getYearlySellerRevenue,
   getYearlySellerOrders,
+  getSellerCounts,
+  getTotalSalesForSellerAndDate1,
+  getYearlySellerOrders1,
+  getYearlySellerRevenue1,
 };
