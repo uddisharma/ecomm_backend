@@ -6,17 +6,21 @@
 const express = require("express");
 const router = express.Router();
 const bannerController = require("../../controller/admin/bannerController");
-const { PLATFORM } = require("../../constants/authConstant");
+
 const auth = require("../../middleware/auth");
 const checkRolePermission = require("../../middleware/checkRolePermission");
+const { PLATFORM } = require("../../constants/authConstant");
+const authenticateJWT = require("../../middleware/loginUser");
 
-router.post("/admin/banner/create", bannerController.addBanner);
-// .post(auth(PLATFORM.ADMIN), checkRolePermission, bannerController.addBanner);
-router.route("/admin/banner/list").get(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  bannerController.findAllBanner
+router.post(
+  "/admin/banner/create",
+  authenticateJWT(PLATFORM.ADMIN),
+  bannerController.addBanner
 );
+
+router
+  .route("/admin/banner/list")
+  .get(authenticateJWT(PLATFORM.ADMIN), bannerController.findAllBanner);
 router
   .route("/admin/seller/banner/list/:username")
   .get(bannerController.findSellerAllBanner);
@@ -33,11 +37,10 @@ router
     bannerController.getBannerCount
   );
 router.route("/admin/banner/:id").get(bannerController.getBanner);
-router.route("/admin/banner/update/:id").patch(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  bannerController.updateBanner
-);
+
+router
+  .route("/admin/banner/update/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), bannerController.updateBanner);
 router
   .route("/admin/banner/partial-update/:id")
   .put(
@@ -45,11 +48,9 @@ router
     checkRolePermission,
     bannerController.partialUpdateBanner
   );
-router.route("/admin/banner/softDelete/:id").patch(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  bannerController.softDeleteBanner
-);
+router
+  .route("/admin/banner/softDelete/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), bannerController.softDeleteBanner);
 router
   .route("/admin/banner/softDeleteMany")
   .put(
@@ -71,11 +72,9 @@ router
     checkRolePermission,
     bannerController.bulkUpdateBanner
   );
-router.route("/admin/banner/delete/:id").delete(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  bannerController.deleteBanner
-);
+router
+  .route("/admin/banner/delete/:id")
+  .delete(authenticateJWT(PLATFORM.ADMIN), bannerController.deleteBanner);
 router
   .route("/admin/banner/deleteMany")
   .post(
