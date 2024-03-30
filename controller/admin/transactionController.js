@@ -404,6 +404,42 @@ const softDeleteManyWalletTransaction = async (req, res) => {
   }
 };
 
+const findSellersTransaction = async (req, res) => {
+  try {
+    let options = {};
+    if (req.query.page) {
+      options = {
+        page: Number(req.query.page),
+        limit: Number(req.query.limit),
+        skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+        sort: "-createdAt",
+      };
+    }
+    const query = {
+      seller: req.params.id,
+      isDeleted: req.query.isDeleted,
+    };
+
+    let foundTransactions = await dbService.paginate(
+      WalletTransaction,
+      query,
+      options
+    );
+
+    if (
+      !foundTransactions ||
+      !foundTransactions.data ||
+      !foundTransactions.data.length
+    ) {
+      return res.recordNotFound();
+    }
+
+    return res.success({ data: foundTransactions });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addWalletTransaction,
   bulkInsertWalletTransaction,
@@ -417,4 +453,5 @@ module.exports = {
   deleteWalletTransaction,
   deleteManyWalletTransaction,
   softDeleteManyWalletTransaction,
+  findSellersTransaction,
 };

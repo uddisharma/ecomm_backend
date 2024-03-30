@@ -14,7 +14,9 @@ router
   .route("/admin/tickets/list")
   .get(authenticateJWT(PLATFORM.ADMIN), ticketController.getAllTickets);
 
-router.route("/admin/tickets/:seller").get(ticketController.getSellerTickets);
+router
+  .route("/admin/tickets/:seller")
+  .get(authenticateJWT(PLATFORM.ADMIN), ticketController.getSellerTickets);
 
 router.patch(
   "/admin/ticket/reply",

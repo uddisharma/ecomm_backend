@@ -72,8 +72,7 @@ router
 router
   .route("/admin/transaction/updateBulk")
   .put(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
+    authenticateJWT(PLATFORM.ADMIN),
     walletTransactionController.bulkUpdateWalletTransaction
   );
 router
@@ -88,6 +87,13 @@ router
     auth(PLATFORM.ADMIN),
     checkRolePermission,
     walletTransactionController.deleteManyWalletTransaction
+  );
+
+router
+  .route("/admin/seller/wallettransactions/:id")
+  .get(
+    authenticateJWT(PLATFORM.DEVICE),
+    walletTransactionController.findSellersTransaction
   );
 
 module.exports = router;
