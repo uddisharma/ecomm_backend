@@ -89,38 +89,77 @@ const findAllProduct = async (req, res) => {
   }
 };
 
+// const findSellersAllProduct = async (req, res) => {
+//   try {
+//     let options = {
+//       page: Number(req.query.page),
+//       limit: Number(req.query.limit),
+//       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
+//       select: ["-sizes", "-tags", "-instaId", "-brand"],
+//       populate: [
+//         { path: "sellerId", select: "username" },
+//         { path: "category", select: "name" },
+//       ],
+//     };
+//     let category = req.query.category;
+//     let query = category
+//       ? {
+//           category: category,
+//         }
+//       : {};
+
+//     if (req.params.username) {
+//       // Find the seller based on the username
+//       const seller = await Seller.findOne({
+//         username: req.params.username,
+//       });
+
+//       if (!seller) {
+//         return res.recordNotFound({
+//           message: "Seller not found with the provided username.",
+//         });
+//       }
+//       query.sellerId = seller._id;
+//     }
+
+//     let foundProducts = await dbService.paginate(Product, query, options);
+
+//     if (!foundProducts || !foundProducts.data || !foundProducts.data.length) {
+//       return res.recordNotFound();
+//     }
+
+//     return res.success({ data: foundProducts });
+//   } catch (error) {
+//     return res.internalServerError({ message: error.message });
+//   }
+// };
+
 const findSellersAllProduct = async (req, res) => {
   try {
     let options = {
       page: Number(req.query.page),
       limit: Number(req.query.limit),
       skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-sizes", "-tags", "-instaId", "-brand"],
-      populate: [
-        { path: "sellerId", select: "username" },
-        { path: "category", select: "name" },
+      select: [
+        "-sizes",
+        "-tags",
+        "-instaId",
+        "-brand",
+        "-colors",
+        "-length",
+        "-breadth",
+        "-height",
+        "-weight",
+        "-desc",
       ],
+      populate: [{ path: "category", select: "name" }],
+      sort: { updatedAt: -1 },
     };
-    let category = req.query.category;
-    let query = category
-      ? {
-          category: category,
-        }
-      : {};
 
-    if (req.params.username) {
-      // Find the seller based on the username
-      const seller = await Seller.findOne({
-        username: req.params.username,
-      });
-
-      if (!seller) {
-        return res.recordNotFound({
-          message: "Seller not found with the provided username.",
-        });
-      }
-      query.sellerId = seller._id;
-    }
+    let query = {
+      sellerId: req.params.id,
+      isDeleted: req.query.isDeleted,
+    };
 
     let foundProducts = await dbService.paginate(Product, query, options);
 
@@ -272,10 +311,17 @@ const getProduct = async (req, res) => {
     if (!ObjectId.isValid(req.params.id)) {
       return res.validationError({ message: "invalid objectId." });
     }
-    query._id = req.params.id;
-
-    let foundProduct = await dbService.findOne(Product, query, options);
-
+    const foundProduct = await Product.findById(req.params.id).populate([
+      {
+        path: "category",
+        populate: {
+          path: "parentCategoryId",
+          populate: {
+            path: "parentCategoryId",
+          },
+        },
+      },
+    ]);
     if (!foundProduct) {
       return res.recordNotFound();
     }
@@ -409,8 +455,7 @@ const softDeleteProduct = async (req, res) => {
     }
     let query = { _id: req.params.id };
     const updateBody = {
-      isDeleted: true,
-      updatedBy: req.user.id,
+      isDeleted: req.body.isDeleted,
     };
     let updatedProduct = await dbService.updateOne(Product, query, updateBody);
     if (!updatedProduct) {
