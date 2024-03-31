@@ -4,6 +4,7 @@
  */
 
 const Seller = require("../../../model/seller");
+const User = require("../../../model/user");
 const userSchemaKey = require("../../../utils/validation/userValidation");
 const validation = require("../../../utils/validateRequest");
 const dbService = require("../../../utils/dbService");
@@ -14,6 +15,7 @@ const auth = require("../../../services/sellerauth");
 const addSeller = async (req, res) => {
   try {
     let dataToCreate = { ...({ ...req.body } || {}) };
+
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       userSchemaKey.schemaKeys
@@ -23,6 +25,17 @@ const addSeller = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
+    const { referral_code } = dataToCreate;
+    let checkReferralCode;
+    if (referral_code) {
+      checkReferralCode = await User.findOne({
+        referralCode: referral_code,
+      });
+      checkReferralCode = checkReferralCode?._id;
+    }
+    
+    dataToCreate.referredBy = checkReferralCode;
+
     let exist = await Seller.findOne({ email: req.body?.email });
 
     if (exist) {

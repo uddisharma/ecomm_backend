@@ -4,6 +4,7 @@
  */
 
 const Seller = require("../../model/seller");
+const Referral = require("../../model/refferrals");
 const userSchemaKey = require("../../utils/validation/userValidation");
 const validation = require("../../utils/validateRequest");
 const dbService = require("../../utils/dbService");
@@ -12,64 +13,50 @@ const auth = require("../../services/auth");
 const deleteDependentService = require("../../utils/deleteDependent");
 const utils = require("../../utils/common");
 const category = require("../../model/category");
+const Referral_Amount = require("../../constants/referral");
 
-function validateData(data) {
-  const requiredFields = [];
+function ValidateSeller(data) {
+  const errors = [];
 
-  // Step 1
-  if (!data.shopname) {
-    requiredFields.push("shopname");
-  }
-  if (!data.username) {
-    requiredFields.push("username");
-  }
-  if (!data.cover) {
-    requiredFields.push("cover");
-  }
-  if (!data.email) {
-    requiredFields.push("email");
-  }
-  if (!data.mobileNo) {
-    requiredFields.push("mobileNo");
-  }
-  if (!data.alternatemobileNo) {
-    requiredFields.push("alternatemobileNo");
-  }
-  if (!data.description) {
-    requiredFields.push("description");
-  }
+  if (!data.shopname) errors.push("Shop Name is required");
+  if (!data.username) errors.push("Username is required");
+  if (!data.cover) errors.push("Cover is required");
+  if (!data.email) errors.push("Email is required");
+  if (!data.mobileNo) errors.push("Mobile Number is required");
+  if (!data.alternatemobileNo)
+    errors.push("Alternate Mobile Number is required");
+  if (!data.description) errors.push("Description is required");
 
-  // Step 2
-  if (
-    !data.shopaddress ||
-    !data.shopaddress.pincode ||
-    !data.shopaddress.address1 ||
-    !data.shopaddress.address2 ||
-    !data.shopaddress.landmark ||
-    !data.shopaddress.city ||
-    !data.shopaddress.state
-  ) {
-    requiredFields.push("shopaddress");
-  }
-
-  // Step 3
-  if (!data.sellingCategory || data.sellingCategory.length === 0) {
-    requiredFields.push("sellingCategory");
+  if (!data.shopaddress) {
+    errors.push("Shop Address is required");
   } else {
-    for (const category of data.sellingCategory) {
-      if (!category.category || !category.photo) {
-        requiredFields.push("sellingCategory");
-        break;
-      }
-    }
+    if (!data.shopaddress.pincode)
+      errors.push("Pincode is required in Shop Address");
+    if (!data.shopaddress.address1)
+      errors.push("Address Line 1 is required in Shop Address");
+    if (!data.shopaddress.address2)
+      errors.push("Address Line 2 is required in Shop Address");
+    if (!data.shopaddress.landmark)
+      errors.push("Landmark is required in Shop Address");
+    if (!data.shopaddress.city) errors.push("City is required in Shop Address");
+    if (!data.shopaddress.state)
+      errors.push("State is required in Shop Address");
   }
 
-  // Step 4
-  if (!data.socialLinks || !data.socialLinks.instagram) {
-    requiredFields.push("socialLinks");
+  if (!data.sellingCategory || data.sellingCategory.length === 0)
+    errors.push("At least one Selling Category is required");
+
+  if (!data.socialLinks) {
+    errors.push("Social Links are required");
+  } else {
+    if (!data.socialLinks.instagram)
+      errors.push("Instagram is required in Social Links");
+    if (!data.socialLinks.facebook)
+      errors.push("Facebook is required in Social Links");
+    if (!data.socialLinks.youtube)
+      errors.push("YouTube is required in Social Links");
   }
 
-  // Step 5
   if (
     !data.owner ||
     !data.owner.personal ||
@@ -84,89 +71,194 @@ function validateData(data) {
     !data.owner.address.city ||
     !data.owner.address.state
   ) {
-    requiredFields.push("owner");
+    if (!data.owner) {
+      errors.push("Owner Details are required");
+    } else {
+      if (!data.owner.personal)
+        errors.push("Personal Details of the Owner are required");
+      if (!data.owner.address)
+        errors.push("Address Details of the Owner are required");
+      if (!data.owner.personal.name)
+        errors.push("Name is required in Owner Personal Details");
+      if (!data.owner.personal.phone)
+        errors.push("Phone number is required in Owner Personal Details");
+      if (!data.owner.personal.email)
+        errors.push("Email is required in Owner Personal Details");
+      if (!data.owner.address.pincode)
+        errors.push("Pincode is required in Owner Address Details");
+      if (!data.owner.address.address1)
+        errors.push("Address Line 1 is required in Owner Address Details");
+      if (!data.owner.address.address2)
+        errors.push("Address Line 2 is required in Owner Address Details");
+      if (!data.owner.address.landmark)
+        errors.push("Landmark is required in Owner Address Details");
+      if (!data.owner.address.city)
+        errors.push("City is required in Owner Address Details");
+      if (!data.owner.address.state)
+        errors.push("State is required in Owner Address Details");
+    }
   }
 
-  // Step 6
   if (
     !data.legal ||
     !data.legal.aadhar ||
-    !data.legal.aadhar.name ||
-    !data.legal.aadhar.address ||
-    !data.legal.aadhar.careof ||
-    !data.legal.aadhar.aadharnumber ||
-    data.legal.aadhar.aadharnumber.length !== 12 ||
-    data.legal.aadhar.signed !== true ||
     !data.legal.pan ||
-    !data.legal.pan.name ||
-    !data.legal.pan.type ||
-    !data.legal.pan.pannumber ||
-    data.legal.pan.pannumber.length !== 10 ||
-    data.legal.pan.signed !== true ||
     !data.legal.bank ||
-    !data.legal.bank.name ||
-    !data.legal.bank.branch ||
-    !data.legal.bank.account ||
-    !data.legal.bank.ifsc ||
-    data.legal.bank.signed !== true ||
-    !data.legal.gst ||
-    !data.legal.taxid ||
     !data.legal.certificate ||
     data.legal.certificate.length < 3 ||
-    data.legal.signed !== true
+    !data.legal.signed
   ) {
-    requiredFields.push("legal");
+    if (!data.legal) {
+      errors.push("Legal Details are required");
+    } else {
+      if (!data.legal.aadhar) {
+        errors.push("Aadhar Details are required in Legal Documents");
+      } else {
+        if (!data.legal.aadhar.name)
+          errors.push("Name is required in Aadhar Details");
+        if (!data.legal.aadhar.address)
+          errors.push("Address is required in Aadhar Details");
+        if (!data.legal.aadhar.careof)
+          errors.push("Care of is required in Aadhar Details");
+        if (!data.legal.aadhar.aadharnumber)
+          errors.push("Aadhar Number is required in Aadhar Details");
+        if (!data.legal.aadhar.signed)
+          errors.push("Aadhar Details must be signed");
+      }
+
+      if (!data.legal.pan) {
+        errors.push("PAN Details are required in Legal Documents");
+      } else {
+        if (!data.legal.pan.name)
+          errors.push("Name is required in PAN Details");
+        if (!data.legal.pan.type)
+          errors.push("Type is required in PAN Details");
+        if (!data.legal.pan.pannumber)
+          errors.push("PAN Number is required in PAN Details");
+        if (!data.legal.pan.signed) errors.push("PAN Details must be signed");
+      }
+
+      if (!data.legal.bank) {
+        errors.push("Bank Details are required in Legal Documents");
+      } else {
+        if (!data.legal.bank.name)
+          errors.push("Name is required in Bank Details");
+        if (!data.legal.bank.branch)
+          errors.push("Branch is required in Bank Details");
+        if (!data.legal.bank.account)
+          errors.push("Account Number is required in Bank Details");
+        if (!data.legal.bank.ifsc)
+          errors.push("IFSC Code is required in Bank Details");
+        if (!data.legal.bank.signed) errors.push("Bank Details must be signed");
+      }
+
+      if (!data.legal.certificate || data.legal.certificate.length < 3) {
+        errors.push("Legal certificates must have at least 3 certificates");
+      }
+
+      if (!data.legal.signed) {
+        errors.push("Legal Documents must be signed");
+      }
+    }
   }
 
-  // Step 7
   if (
     !data.deliverypartner ||
     !data.deliverypartner.personal ||
-    !data.deliverypartner.personal.have ||
+    data.deliverypartner.personal.have === undefined ||
+    (data.deliverypartner.personal.have &&
+      !data.deliverypartner.personal.name &&
+      !data.deliverypartner.personal.rate) ||
     !data.deliverypartner.partner ||
     !data.deliverypartner.partner.email ||
     !data.deliverypartner.partner.password ||
     !data.deliverypartner.partner.warehouses ||
     data.deliverypartner.partner.warehouses.length === 0
   ) {
-    requiredFields.push("deliverypartner");
-  } else {
-    for (const warehouse of data.deliverypartner.partner.warehouses) {
-      if (
-        !warehouse.warehouse_name ||
-        !warehouse.name ||
-        !warehouse.address ||
-        !warehouse.address_2 ||
-        !warehouse.city ||
-        !warehouse.state ||
-        !warehouse.pincode ||
-        !warehouse.phone ||
-        !warehouse.default
-      ) {
-        requiredFields.push("deliverypartner");
-        break;
+    if (!data.deliverypartner) {
+      errors.push("Delivery Partner Details are required");
+    } else {
+      if (!data.deliverypartner.personal) {
+        errors.push("Personal Details of the Delivery Partner are required");
+      } else {
+        if (data.deliverypartner.personal.have === undefined) {
+          errors.push(
+            "Have is required in Personal Details of the Delivery Partner"
+          );
+        }
+        if (
+          data.deliverypartner.personal.have &&
+          !data.deliverypartner.personal.name &&
+          !data.deliverypartner.personal.rate
+        ) {
+          errors.push(
+            "Name or Rate is required in Personal Details of the Delivery Partner"
+          );
+        }
+      }
+
+      if (!data.deliverypartner.partner) {
+        errors.push("Partner Details are required");
+      } else {
+        if (!data.deliverypartner.partner.email)
+          errors.push("Email is required in Partner Details");
+        if (!data.deliverypartner.partner.password)
+          errors.push("Password is required in Partner Details");
+        if (
+          !data.deliverypartner.partner.warehouses ||
+          data.deliverypartner.partner.warehouses.length === 0
+        ) {
+          errors.push("At least one Warehouse is required in Partner Details");
+        } else {
+          for (
+            let i = 0;
+            i < data.deliverypartner.partner.warehouses.length;
+            i++
+          ) {
+            const warehouse = data.deliverypartner.partner.warehouses[i];
+            if (!warehouse.warehouse_name)
+              errors.push(`Warehouse name is required in Warehouse ${i + 1}`);
+            if (!warehouse.name)
+              errors.push(`Name is required in Warehouse ${i + 1}`);
+            if (!warehouse.address)
+              errors.push(`Address is required in Warehouse ${i + 1}`);
+            if (!warehouse.address_2)
+              errors.push(`Address Line 2 is required in Warehouse ${i + 1}`);
+            if (!warehouse.city)
+              errors.push(`City is required in Warehouse ${i + 1}`);
+            if (!warehouse.state)
+              errors.push(`State is required in Warehouse ${i + 1}`);
+            if (!warehouse.pincode)
+              errors.push(`Pincode is required in Warehouse ${i + 1}`);
+            if (!warehouse.phone)
+              errors.push(`Phone is required in Warehouse ${i + 1}`);
+            if (warehouse.default === undefined)
+              errors.push(`Default status is required in Warehouse ${i + 1}`);
+          }
+        }
       }
     }
   }
 
-  // Additional fields
   if (!data.rating || !data.rating.rate || !data.rating.total) {
-    requiredFields.push("rating");
-  }
-  if (!data.charge) {
-    requiredFields.push("charge");
-  }
-  if (!data.isActive) {
-    requiredFields.push("isActive");
-  }
-  if (data.isDeleted) {
-    requiredFields.push("isDeleted");
-  }
-  if (data.isOnboarded) {
-    requiredFields.push("isOnboarded");
+    if (!data.rating) {
+      errors.push("Rating Details are required");
+    } else {
+      if (!data.rating.rate) errors.push("Rate is required in Rating Details");
+      if (!data.rating.total)
+        errors.push("Total is required in Rating Details");
+    }
   }
 
-  return requiredFields;
+  if (!data.charge) errors.push("Charge is required");
+
+  if (data.isDeleted == true) errors.push("Seller is Deleted ");
+
+  if (errors.length > 0) {
+    return { valid: false, errors };
+  }
+
+  return { valid: true, errors: null };
 }
 
 const addSeller = async (req, res) => {
@@ -502,6 +594,11 @@ const getSeller = async (req, res) => {
           },
         },
       })
+      .populate({
+        path: "referredBy",
+        select: ["name", "email"],
+      })
+
       .select("-resetPasswordLink -password");
     if (user) {
       return res.success({
@@ -511,6 +608,7 @@ const getSeller = async (req, res) => {
       return res.recordNotFound();
     }
   } catch (error) {
+    console.log(error);
     return res.internalServerError({ data: error.message });
   }
 };
@@ -537,24 +635,21 @@ const getSellerCount = async (req, res) => {
 
 const updateSeller = async (req, res) => {
   try {
-    // return res.send(req.body);
-    let dataToUpdate = {
-      ...req.body,
-    };
-    const query = {
-      _id: {
-        $eq: req.params.id,
-      },
-    };
-    // let updatedSeller = await dbService.updateOne(Seller, query, dataToUpdate);
+    let dataToUpdate = { ...req.body };
+    if (dataToUpdate.isOnboarded) {
+      delete dataToUpdate.isOnboarded;
+    }
+
     let updatedSeller = await Seller.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      dataToUpdate,
       { new: true }
     );
+
     if (!updatedSeller) {
       return res.recordNotFound();
     }
+
     return res.success({ data: updatedSeller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -733,6 +828,69 @@ const addCategory = async (req, res) => {
   }
 };
 
+const finalOnboardSeller = async (req, res) => {
+  try {
+    let dataToUpdate = {
+      ...req.body,
+    };
+
+    const { valid, errors } = ValidateSeller(dataToUpdate);
+
+    if (!valid) {
+      return res.json({ valid, errors });
+    }
+
+    let updatedSeller = await Seller.findByIdAndUpdate(
+      req.params.id,
+      {
+        isOnboarded: true,
+      },
+      { new: true }
+    );
+    if (!updatedSeller) {
+      return res.recordNotFound();
+    }
+
+    if (updatedSeller?.referredBy) {
+      const findReferral = await Referral.findOne({
+        referredSeller: req.params.id,
+        referringUser: updatedSeller?.referredBy,
+      });
+      if (!findReferral) {
+        const newReferral = new Referral({
+          referredSeller: req.params.id,
+          referringUser: updatedSeller?.referredBy,
+          amount: Referral_Amount,
+          onboarded: true,
+        });
+        await newReferral.save();
+      }
+    }
+
+    return res.success({ data: updatedSeller });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
+const unOnboardSeller = async (req, res) => {
+  try {
+    let updatedSeller = await Seller.findByIdAndUpdate(
+      req.params.id,
+      {
+        isOnboarded: false,
+      },
+      { new: true }
+    );
+    if (!updatedSeller) {
+      return res.recordNotFound();
+    }
+    return res.success({ data: updatedSeller });
+  } catch (error) {
+    return res.internalServerError({ message: error.message });
+  }
+};
+
 module.exports = {
   addSeller,
   findAllSellers,
@@ -757,4 +915,6 @@ module.exports = {
   findSingleSellerWithdeleted,
   deleteSeller,
   addCategory,
+  finalOnboardSeller,
+  unOnboardSeller,
 };

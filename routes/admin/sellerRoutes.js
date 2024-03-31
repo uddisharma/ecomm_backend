@@ -82,4 +82,12 @@ router
   .route("/admin/add/category")
   .patch(authenticateJWT(PLATFORM.ADMIN), sellerController.addCategory);
 
+router
+  .route("/admin/seller/finalonboard/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), sellerController.finalOnboardSeller);
+
+router
+  .route("/admin/seller/unonboard/:id")
+  .patch(authenticateJWT(PLATFORM.ADMIN), sellerController.unOnboardSeller);
+
 module.exports = router;
