@@ -856,6 +856,27 @@ const finalOnboardSeller = async (req, res) => {
         referredSeller: req.params.id,
         referringUser: updatedSeller?.referredBy,
       });
+
+      if (!findReferral?.onboarded || !findReferral?.status) {
+        await Referral.findOneAndUpdate(
+          {
+            referredSeller: req.params.id,
+            referringUser: updatedSeller?.referredBy,
+          },
+          {
+            $set: {
+              referredSeller: req.params.id,
+              referringUser: updatedSeller?.referredBy,
+              amount: Referral_Amount,
+              onboarded: true,
+            },
+          },
+          {
+            new: true,
+          }
+        );
+      }
+
       if (!findReferral) {
         const newReferral = new Referral({
           referredSeller: req.params.id,

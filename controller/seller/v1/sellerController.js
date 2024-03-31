@@ -4,6 +4,7 @@
  */
 
 const Seller = require("../../../model/seller");
+const Referral = require("../../../model/refferrals");
 const User = require("../../../model/user");
 const userSchemaKey = require("../../../utils/validation/userValidation");
 const validation = require("../../../utils/validateRequest");
@@ -33,7 +34,7 @@ const addSeller = async (req, res) => {
       });
       checkReferralCode = checkReferralCode?._id;
     }
-    
+
     dataToCreate.referredBy = checkReferralCode;
 
     let exist = await Seller.findOne({ email: req.body?.email });
@@ -54,7 +55,22 @@ const addSeller = async (req, res) => {
     }
 
     dataToCreate = new Seller(dataToCreate);
+
     let createdUser = await dbService.create(Seller, dataToCreate);
+
+    const findReferral = await Referral.findOne({
+      referredSeller: createdUser?._id,
+      referringUser: checkReferralCode,
+    });
+
+    if (!findReferral) {
+      const newReferral = new Referral({
+        referredSeller: createdUser?._id,
+        referringUser: checkReferralCode,
+      });
+      await newReferral.save();
+    }
+
     return res.success({ data: createdUser });
   } catch (error) {
     return res.internalServerError({ message: error.message });
