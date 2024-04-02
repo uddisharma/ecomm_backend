@@ -181,6 +181,7 @@ const getOrder = async (req, res) => {
         "shopaddress",
         "mobileNo",
         "deliverypartner.personal.name",
+        "owner.signature",
       ])
       .populate({
         path: "orderItems",

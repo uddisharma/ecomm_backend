@@ -101,6 +101,10 @@ const schema = new Schema(
         city: { type: String }, //required
         state: { type: String }, //required
       },
+      signature: {
+        //required
+        type: String,
+      },
     },
 
     //step-6
@@ -173,12 +177,14 @@ const schema = new Schema(
 
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
 
-    rating: { //required
+    rating: {
+      //required
       rate: String,
       total: String,
     },
 
-    charge: { //required
+    charge: {
+      //required
       type: String,
     },
 
@@ -187,17 +193,19 @@ const schema = new Schema(
       expireTime: Date,
     },
 
-    isActive: { // true required
+    isActive: {
+      // true required
       type: Boolean,
       default: false,
     },
 
-    isDeleted: {//false required
+    isDeleted: {
+      //false required
       type: Boolean,
       default: false,
     },
 
-    isOnboarded: { 
+    isOnboarded: {
       type: Boolean,
       default: false,
     },

@@ -136,7 +136,7 @@ const getWalletTransaction = async (req, res) => {
       req.params.id
     ).populate({
       path: "seller",
-      select: "username shopname",
+      select: "username shopname shopaddress email",
     });
     if (!foundWalletTransaction) {
       return res.recordNotFound();

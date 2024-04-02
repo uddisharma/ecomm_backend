@@ -35,14 +35,14 @@ router
   .route("/admin/order/:id")
   .get(
     authenticateJWT(PLATFORM.ADMIN),
-    checkRolePermission,
+   
     orderController.getOrder
   );
 router
   .route("/admin/order/update/:id")
   .patch(
     authenticateJWT(PLATFORM.ADMIN),
-    checkRolePermission,
+   
     orderController.updateOrder
   );
 router

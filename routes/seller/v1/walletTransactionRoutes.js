@@ -33,10 +33,9 @@ router
     walletTransactionController.getWalletTransactionCount
   );
 router
-  .route("/seller/api/v1/wallettransaction/:id")
+  .route("/seller/api/v1/transaction/:id")
   .get(
-    auth(PLATFORM.DEVICE),
-    checkRolePermission,
+    authenticateJWT(PLATFORM.DEVICE),
     walletTransactionController.getWalletTransaction
   );
 router

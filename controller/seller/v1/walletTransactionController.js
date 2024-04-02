@@ -132,19 +132,15 @@ const findAllWalletTransaction = async (req, res) => {
  * @param {Object} res : response contains document retrieved from table.
  * @return {Object} : found WalletTransaction. {status, message, data}
  */
+
 const getWalletTransaction = async (req, res) => {
   try {
-    let query = {};
-    if (!ObjectId.isValid(req.params.id)) {
-      return res.validationError({ message: "invalid objectId." });
-    }
-    query._id = req.params.id;
-    let options = {};
-    let foundWalletTransaction = await dbService.findOne(
-      WalletTransaction,
-      query,
-      options
-    );
+    const foundWalletTransaction = await WalletTransaction?.findById(
+      req.params.id
+    ).populate({
+      path: "seller",
+      select: "username shopname shopaddress email",
+    });
     if (!foundWalletTransaction) {
       return res.recordNotFound();
     }
