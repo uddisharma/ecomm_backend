@@ -9,6 +9,7 @@ const orderController = require("../../../controller/client/v1/orderController")
 const { PLATFORM } = require("../../../constants/authConstant");
 const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
+const authenticateJWT = require("../../../middleware/loginUser");
 
 router.post("/client/api/v1/order/create", orderController.addOrder);
 // .post(auth(PLATFORM.CLIENT), checkRolePermission, orderController.addOrder);
@@ -44,10 +45,16 @@ router.route("/client/api/v1/order/revenue/monthwise").get(
   // checkRolePermission,
   orderController.getMonthWiseRevenue
 );
-router.get("/client/api/v1/order/:id", orderController.getOrder);
 
 router.get(
-  "/client/api/v1/order/user/:customerId",
+  "/client/api/v1/order/:id",
+  authenticateJWT(PLATFORM.CLIENT),
+  orderController.getOrder
+);
+
+router.get(
+  "/client/api/v1/orders/user",
+  authenticateJWT(PLATFORM.CLIENT),
   orderController.getAllOrdersByUser
 );
 

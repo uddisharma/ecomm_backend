@@ -166,16 +166,10 @@ const getOrder = async (req, res) => {
 };
 
 const getAllOrdersByUser = async (req, res) => {
-  const customerId = req.params.customerId;
+  const customerId = req.user.id;
+
   try {
-    // const customer = await Order.find({ customerId });
-
-    // if (!customer) {
-    //   return res.status(404).json({ message: "Customer not found" });
-    // }
-
     const orders = await Order.find({ customerId })
-      // .populate("customerId", ["firstName", "lastName", "email"])
       .populate("sellerId", ["shopname", "username"])
       .populate({
         path: "orderItems",

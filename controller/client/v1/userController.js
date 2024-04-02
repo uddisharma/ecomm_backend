@@ -230,7 +230,7 @@ const updateUser = async (req, res) => {
 };
 
 const addAdress = async (req, res) => {
-  const userId = req.params.userId;
+  const userId = req.user.id;
   const newShippingAddress = req.body.newShippingAddress;
 
   // if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -260,7 +260,7 @@ const addAdress = async (req, res) => {
 
 const updateAddress = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
     const addressId = req.params.addressId;
     // return res.send({ userId, addressId });
     const user = await User.findById(userId);
@@ -410,33 +410,13 @@ const bulkUpdateUser = async (req, res) => {
  */
 const partialUpdateUser = async (req, res) => {
   try {
-    if (!req.params.id) {
+    if (!req.user.id) {
       res.badRequest({
         message: "Insufficient request parameters! id is required.",
       });
     }
-    // delete req.body["addedBy"];
-    // let dataToUpdate = {
-    //   ...req.body,
-    //   updatedBy: req.user.id,
-    // };
-    // let validateRequest = validation.validateParamsWithJoi(
-    //   dataToUpdate,
-    //   userSchemaKey.updateSchemaKeys
-    // );
-    // if (!validateRequest.isValid) {
-    //   return res.validationError({
-    //     message: `Invalid values in parameters, ${validateRequest.message}`,
-    //   });
-    // }
-    // const query = {
-    //   _id: {
-    //     $eq: req.params.id,
-    //     $ne: req.user.id,
-    //   },
-    // };
-    // let updatedUser = await dbService.updateOne(User, query, dataToUpdate);
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, req.body, {
       new: true,
     });
     if (!updatedUser) {
@@ -464,7 +444,7 @@ const changePassword = async (req, res) => {
     }
     let result = await auth.changePassword({
       ...params,
-      userId: req.params.id,
+      userId: req.user.id,
     });
     if (result.flag) {
       return res.failure({ message: result.data });

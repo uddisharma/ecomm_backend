@@ -9,6 +9,7 @@ const userController = require("../../../controller/client/v1/userController");
 const { PLATFORM } = require("../../../constants/authConstant");
 const auth = require("../../../middleware/auth");
 const checkRolePermission = require("../../../middleware/checkRolePermission");
+const authenticateJWT = require("../../../middleware/loginUser");
 
 router
   .route("/client/api/v1/user/me")
@@ -31,14 +32,15 @@ router
   .route("/client/api/v1/user/update/:id")
   .put(auth(PLATFORM.CLIENT), checkRolePermission, userController.updateUser);
 
-// router
-//   .route("/client/api/v1/user/add-address/:id")
-//   .put(auth(PLATFORM.CLIENT), checkRolePermission, userController.updateAdress);
-
-router.put("/client/api/v1/user/add-address/:userId", userController.addAdress);
+router.put(
+  "/client/api/v1/user/add-address",
+  authenticateJWT(PLATFORM.CLIENT),
+  userController.addAdress
+);
 
 router.put(
-  "/client/api/v1/user/update-address/:userId/:addressId",
+  "/client/api/v1/user/update-address/:addressId",
+  authenticateJWT(PLATFORM.CLIENT),
   userController.updateAddress
 );
 
@@ -53,7 +55,8 @@ router.delete(
 );
 
 router.patch(
-  "/client/api/v1/user/partial-update/:id",
+  "/client/api/v1/user/partial-update",
+  authenticateJWT(PLATFORM.CLIENT),
   userController.partialUpdateUser
 );
 
@@ -72,7 +75,8 @@ router
     userController.bulkUpdateUser
   );
 router.patch(
-  "/client/api/v1/user/change-password/:id",
+  "/client/api/v1/user/change-password",
+  authenticateJWT(PLATFORM.CLIENT),
   userController.changePassword
 );
 router

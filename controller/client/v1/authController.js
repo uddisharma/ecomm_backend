@@ -114,7 +114,7 @@ const login = async (req, res) => {
       });
     }
     let roleAccess = false;
-    
+
     if (req.body.includeRoleAccess) {
       roleAccess = req.body.includeRoleAccess;
     }
@@ -142,7 +142,7 @@ const login = async (req, res) => {
         const userData = user.toJSON();
         const token = await generateToken(
           userData,
-          authConstant.JWT.DEVICE_SECRET
+          authConstant.JWT.CLIENT_SECRET
         );
         return res.success({
           data: { ...userData, token },
