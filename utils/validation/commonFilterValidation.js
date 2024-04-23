@@ -1,11 +1,7 @@
-/**
- * commonFilterValidation.js
- * @description :: helper to validate filter.
- */
 
 const joi = require('joi');
 
-/** exports options which contains attributes of querying data. */
+
 exports.options = joi.object({
   pagination: joi.boolean(),
   collation: joi.alternatives().try(joi.string(), joi.object()).allow(null).allow(''),
@@ -24,14 +20,14 @@ exports.options = joi.object({
 
 }).unknown(true);
 
-/** exports joi boolean attributes for count request */
+
 exports.isCountOnly = joi.boolean();
 
-/** exports validation attributes for mongoose populate */
+
 exports.populate = joi.object({
   path: joi.string().allow(null).allow(''),
   select: joi.array()
 }).unknown(true);
 
-/** exports projection attributes for mongoose document */
+
 exports.select = joi.alternatives().try(joi.array().items(),joi.string(),joi.object()).allow(null).allow('');

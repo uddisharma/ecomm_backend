@@ -1,22 +1,15 @@
-/**
- * db.js
- * @description :: exports database connection using mongoose
- */
-
-const mongoose = require('mongoose');
-const uri = process.env.NODE_ENV === 'test' ? process.env.DB_TEST_URL : process.env.DB_URL;
+const mongoose = require("mongoose");
+const uri = "mongodb://127.0.0.1:27017/EcomDb_test";
 mongoose.connect(uri, {
   useNewUrlParser: true,
-  useUnifiedTopology: true 
+  useUnifiedTopology: true,
 });
 let db = mongoose.connection;
 
-db.once('open', () => {
-  console.log('Connection Successful');
+db.once("open", () => {
+  console.log("Connection Successful");
 });
 
-db.on('error', () => {
-  console.log('Error in mongodb connection');
+db.on("error", () => {
+  console.log("Error in mongodb connection");
 });
-
-module.exports = mongoose;

@@ -24,9 +24,14 @@ router.patch(
   authenticateJWT(PLATFORM.ADMIN),
   ReferralController.updateReferral
 );
-router.delete("/admin/referrals/:id", ReferralController.deleteReferral);
+router.delete(
+  "/admin/referrals/:id",
+  authenticateJWT(PLATFORM.ADMIN),
+  ReferralController.deleteReferral
+);
 router.get(
   "/admin/referral/user/:id",
+  authenticateJWT(PLATFORM.ADMIN),
   ReferralController.getAllReferralsofUser
 );
 module.exports = router;

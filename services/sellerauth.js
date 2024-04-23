@@ -5,7 +5,6 @@
 
 const User = require("../model/seller");
 const dbService = require("../utils/dbService");
-const userTokens = require("../model/userTokens");
 const {
   JWT,
   LOGIN_ACCESS,
@@ -182,12 +181,7 @@ const loginUser = async (username, password, platform, roleAccess) => {
           }
         );
       }
-      let expire = dayjs().add(JWT.EXPIRES_IN, "second").toISOString();
-      await dbService.create(userTokens, {
-        userId: user.id,
-        token: token,
-        tokenExpiredTime: expire,
-      });
+
       let userToReturn = {
         ...userData,
         token,
@@ -226,8 +220,8 @@ const changePassword = async (params) => {
     // const user = await User.findById(params.userId);
 
     if (user && user.id) {
-      // let isPasswordMatch = await user.isPasswordMatch(oldPassword);
-      let isPasswordMatch = user.password == oldPassword;
+      let isPasswordMatch = await user.isPasswordMatch(oldPassword);
+      // let isPasswordMatch = user.password == oldPassword;
 
       if (!isPasswordMatch) {
         return {
@@ -235,7 +229,7 @@ const changePassword = async (params) => {
           data: "Incorrect old password",
         };
       }
-      // password = await bcrypt.hash(password, 8);
+      password = await bcrypt.hash(password, 8);
       let updatedUser = dbService.updateOne(User, where, {
         password: password,
       });
@@ -292,14 +286,14 @@ const sendResetPasswordNotification = async (user) => {
       },
     });
     if (FORGOT_PASSWORD_WITH.LINK.email) {
-      let viewType = "/reset-password/";
+      let viewType = "/auth/reset-password/";
       let mailObj = {
         subject: "Reset Password",
         to: user.email,
         template: "/views/email/ResetPassword",
         data: {
           userName: user.username || "-",
-          link: `http://localhost:${3000}` + viewType + token,
+          link: `http://localhost:${3001}` + viewType + token,
           linkText: "Reset Password",
         },
       };
@@ -359,7 +353,7 @@ const resetPassword = async (user, newPassword) => {
         data: "User not found",
       };
     }
-    // newPassword = await bcrypt.hash(newPassword, 8);
+    newPassword = await bcrypt.hash(newPassword, 8);
     await User?.findByIdAndUpdate(user.id, {
       password: newPassword,
       resetPasswordLink: null,

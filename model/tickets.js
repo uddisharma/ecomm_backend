@@ -1,5 +1,3 @@
-// models/raiseQueryModel.js
-
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 let idValidator = require("mongoose-id-validator");
@@ -37,8 +35,7 @@ const schema = new mongoose.Schema(
     replies: [
       {
         from: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Employee",
+          type: String,
           required: true,
         },
         message: {

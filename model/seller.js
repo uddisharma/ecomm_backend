@@ -186,6 +186,16 @@ const schema = new Schema(
     charge: {
       //required
       type: String,
+      default: "0",
+    },
+
+    priorCharge: {
+      type: String,
+      default: "0",
+    },
+
+    onboardAt: {
+      type: Date,
     },
 
     resetPasswordLink: {
@@ -194,13 +204,11 @@ const schema = new Schema(
     },
 
     isActive: {
-      // true required
       type: Boolean,
       default: false,
     },
 
     isDeleted: {
-      //false required
       type: Boolean,
       default: false,
     },
@@ -219,10 +227,10 @@ const schema = new Schema(
 );
 schema.pre("save", async function (next) {
   this.isDeleted = false;
-  this.isActive = false;
-  // if (this.password) {
-  //   this.password = await bcrypt.hash(this.password, 8);
-  // }
+  // this.isActive = false;
+  if (this.password) {
+    this.password = await bcrypt.hash(this.password, 8);
+  }
   next();
 });
 

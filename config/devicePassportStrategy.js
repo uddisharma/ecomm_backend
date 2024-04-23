@@ -1,8 +1,4 @@
-/**
- * @description : exports authentication strategy for device using passport.js
- * @params {Object} passport : passport object for authentication
- * @return {callback} : returns callback to be used in middleware
- */
+
  
 const {
   Strategy, ExtractJwt 

@@ -1,14 +1,10 @@
-/**
- * categoryValidation.js
- * @description :: validate each post and put request as per category model
- */
+
 
 const joi = require('joi');
 const {
   options, isCountOnly, populate, select 
 } = require('./commonFilterValidation');
 
-/** validation keys and properties of category */
 exports.schemaKeys = joi.object({
   name: joi.string().allow(null).allow(''),
   isActive: joi.boolean(),
@@ -16,7 +12,7 @@ exports.schemaKeys = joi.object({
   isDeleted: joi.boolean()
 }).unknown(true);
 
-/** validation keys and properties of category for updation */
+
 exports.updateSchemaKeys = joi.object({
   name: joi.string().allow(null).allow(''),
   isActive: joi.boolean(),
@@ -26,7 +22,7 @@ exports.updateSchemaKeys = joi.object({
 }).unknown(true);
 
 let keys = ['query', 'where'];
-/** validation keys and properties of category for filter documents from collection */
+
 exports.findFilterKeys = joi.object({
   options: options,
   ...Object.fromEntries(

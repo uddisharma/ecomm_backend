@@ -1,10 +1,12 @@
-const Country = require("../../model/country");
 const Coupon = require("../../model/coupons");
 const couponSchemaKey = require("../../utils/validation/coupnValidation");
 const validation = require("../../utils/validateRequest");
 const dbService = require("../../utils/dbService");
-const Seller = require("../../model/seller");
 const ObjectId = require("mongodb").ObjectId;
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({
+  stdTTL: 600,
+});
 
 const addCoupon = async (req, res) => {
   try {
@@ -20,59 +22,11 @@ const addCoupon = async (req, res) => {
     }
     dataToCreate = new Coupon(dataToCreate);
     let createdCoupon = await dbService.create(Coupon, dataToCreate);
+    // myCache.del("findSellersCouponsadmin");
+    // myCache.del("singlecouponseller");
+    // myCache.del("sellercouponsseller");
+    // myCache.del("singlecouponcountseller");
     return res.success({ data: createdCoupon });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const applyCoupon = async (req, res) => {
-  try {
-    const { code, username } = req.body;
-
-    // Find the seller by username
-    const seller = await Seller.findOne({ username });
-
-    if (!seller) {
-      return res
-        .status(404)
-        .json({ status: "FAILED", message: "Seller not found" });
-    }
-    const coupon = await Coupon.findOne({
-      code,
-      seller: seller._id,
-    });
-
-    if (!coupon) {
-      return res.json({ status: "FAILED", message: "Invalid Coupon" });
-    }
-
-    return res.success({ data: coupon });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const findAllCoupons = async (req, res) => {
-  try {
-    let options = {};
-    if (req.query.page) {
-      options = {
-        page: Number(req.query.page),
-        limit: Number(req.query.limit),
-        skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-        populate: [{ path: "seller", select: "username" }],
-      };
-    }
-    const query = {};
-
-    let foundCoupons = await dbService.paginate(Coupon, query, options);
-
-    if (!foundCoupons || !foundCoupons.data || !foundCoupons.data.length) {
-      return res.recordNotFound();
-    }
-
-    return res.success({ data: foundCoupons });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -95,13 +49,23 @@ const findSellersCoupons = async (req, res) => {
       isDeleted: req.query.isDeleted,
     };
 
-    let foundCoupons = await dbService.paginate(Coupon, query, options);
+    // const chachedcoupons = myCache.get("findSellersCouponsadmin");
 
-    if (!foundCoupons || !foundCoupons.data || !foundCoupons.data.length) {
-      return res.recordNotFound();
-    }
+    // if (chachedcoupons) {
+    //   return res.success({ data: JSON.parse(chachedcoupons) });
+    // } else {
+      let foundCoupons = await dbService.paginate(Coupon, query, options);
 
-    return res.success({ data: foundCoupons });
+      if (!foundCoupons || !foundCoupons.data || !foundCoupons.data.length) {
+        return res.recordNotFound();
+      }
+      // myCache.set(
+      //   "findSellersCouponsadmin",
+      //   JSON.stringify(foundCoupons),
+      //   21600
+      // );
+      return res.success({ data: foundCoupons });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -120,25 +84,6 @@ const getCoupon = async (req, res) => {
       return res.recordNotFound();
     }
     return res.success({ data: foundCoupon });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const getSelllerCouponCount = async (req, res) => {
-  try {
-    let where = { seller: req.params.seller };
-    let countedCoupon = await dbService.count(Coupon, where);
-    return res.success({ data: { count: countedCoupon } });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const getCouponCount = async (req, res) => {
-  try {
-    let countedCoupon = await dbService.count(Coupon);
-    return res.success({ data: { count: countedCoupon } });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -163,6 +108,10 @@ const updateCoupon = async (req, res) => {
     if (!updatedCoupon) {
       return res.recordNotFound();
     }
+    // myCache.del("findSellersCouponsadmin");
+    // myCache.del("singlecouponseller");
+    // myCache.del("sellercouponsseller");
+    // myCache.del("singlecouponcountseller");
     return res.success({ data: updatedCoupon });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -181,6 +130,10 @@ const deleteCoupon = async (req, res) => {
     if (!deletedcoupon) {
       return res.recordNotFound();
     }
+    // myCache.del("findSellersCouponsadmin");
+    // myCache.del("singlecouponseller");
+    // myCache.del("sellercouponsseller");
+    // myCache.del("singlecouponcountseller");
     return res.success({ data: deletedcoupon });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -189,12 +142,8 @@ const deleteCoupon = async (req, res) => {
 
 module.exports = {
   addCoupon,
-  applyCoupon,
-  findAllCoupons,
-  getCouponCount,
   findSellersCoupons,
   getCoupon,
-  getSelllerCouponCount,
   updateCoupon,
   deleteCoupon,
 };

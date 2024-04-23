@@ -1,14 +1,11 @@
-/**
- * bannerValidation.js
- * @description :: validate each post and put request as per banner model
- */
+
 
 const joi = require('joi');
 const {
   options, isCountOnly, populate, select 
 } = require('./commonFilterValidation');
 
-/** validation keys and properties of banner */
+
 exports.schemaKeys = joi.object({
   bannerTitle: joi.string().allow(null).allow(''),
   alternateTitle: joi.string().allow(null).allow(''),
@@ -21,7 +18,7 @@ exports.schemaKeys = joi.object({
   isDeleted: joi.boolean()
 }).unknown(true);
 
-/** validation keys and properties of banner for updation */
+
 exports.updateSchemaKeys = joi.object({
   bannerTitle: joi.string().allow(null).allow(''),
   alternateTitle: joi.string().allow(null).allow(''),
@@ -36,7 +33,7 @@ exports.updateSchemaKeys = joi.object({
 }).unknown(true);
 
 let keys = ['query', 'where'];
-/** validation keys and properties of banner for filter documents from collection */
+
 exports.findFilterKeys = joi.object({
   options: options,
   ...Object.fromEntries(

@@ -1,11 +1,5 @@
-/**
- * auth.js
- * @description :: functions used in authentication
- */
-
 const User = require("../model/admin");
 const dbService = require("../utils/dbService");
-const userTokens = require("../model/userTokens");
 const {
   JWT,
   LOGIN_ACCESS,
@@ -23,12 +17,6 @@ const smsService = require("./sms");
 const ejs = require("ejs");
 const uuid = require("uuid").v4;
 
-/**
- * @description : generate JWT token for authentication.
- * @param {Object} user : user who wants to login.
- * @param {string} secret : secret for JWT.
- * @return {string}  : returns JWT token.
- */
 const generateToken = async (user, secret) => {
   return jwt.sign(
     {
@@ -40,14 +28,6 @@ const generateToken = async (user, secret) => {
   );
 };
 
-/**
- * @description : login user.
- * @param {string} username : username of user.
- * @param {string} password : password of user.
- * @param {string} platform : platform.
- * @param {boolean} roleAccess: a flag to request user`s role access
- * @return {Object} : returns authentication status. {flag, data}
- */
 const loginUser = async (username, password, platform, roleAccess) => {
   try {
     let where = { $or: [{ username: username }, { email: username }] };
@@ -121,8 +101,8 @@ const loginUser = async (username, password, platform, roleAccess) => {
         }
       }
       if (password) {
-        // const isPasswordMatched = await user.isPasswordMatch(password);
-        const isPasswordMatched = user.password == password;
+        const isPasswordMatched = await user.isPasswordMatch(password);
+
         if (!isPasswordMatched) {
           await dbService.updateOne(
             User,
@@ -182,12 +162,7 @@ const loginUser = async (username, password, platform, roleAccess) => {
           }
         );
       }
-      let expire = dayjs().add(JWT.EXPIRES_IN, "second").toISOString();
-      await dbService.create(userTokens, {
-        userId: user.id,
-        token: token,
-        tokenExpiredTime: expire,
-      });
+
       let userToReturn = {
         ...userData,
         token,
@@ -210,11 +185,6 @@ const loginUser = async (username, password, platform, roleAccess) => {
   }
 };
 
-/**
- * @description : change password.
- * @param {Object} params : object of new password, old password and user`s id.
- * @return {Object}  : returns status of change password. {flag,data}
- */
 const changePassword = async (params) => {
   try {
     let password = params.newPassword;
@@ -223,11 +193,9 @@ const changePassword = async (params) => {
       _id: params.userId,
     };
     let user = await dbService.findOne(User, where);
-    // const user = await User.findById(params.userId);
 
     if (user && user.id) {
-      // let isPasswordMatch = await user.isPasswordMatch(oldPassword);
-      let isPasswordMatch = user.password == oldPassword;
+      let isPasswordMatch = await user.isPasswordMatch(oldPassword);
 
       if (!isPasswordMatch) {
         return {
@@ -235,7 +203,7 @@ const changePassword = async (params) => {
           data: "Incorrect old password",
         };
       }
-      // password = await bcrypt.hash(password, 8);
+      password = await bcrypt.hash(password, 8);
       let updatedUser = dbService.updateOne(User, where, {
         password: password,
       });
@@ -348,7 +316,7 @@ const resetPassword = async (user, newPassword) => {
         data: "Admin not found",
       };
     }
-    // newPassword = await bcrypt.hash(newPassword, 8);
+    newPassword = await bcrypt.hash(newPassword, 8);
     await dbService.updateOne(User, where, {
       password: newPassword,
       resetPasswordLink: null,

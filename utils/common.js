@@ -1,29 +1,15 @@
-/**
- * common.js
- * @description: exports helper methods for project.
- */
+
 
 const mongoose = require('mongoose');
-const UserRole = require('../model/userRole');
-const RouteRole = require('../model/routeRole');
 const dbService = require('./dbService');
 
-/**
- * convertObjectToEnum : converts object to enum
- * @param {Object} obj : object to be converted
- * @return {Array} : converted Array
- */
+
 function convertObjectToEnum (obj) {
   const enumArr = [];
   Object.values(obj).map((val) => enumArr.push(val));
   return enumArr;
 }
 
-/**
- * randomNumber : generate random numbers for given length
- * @param {number} length : length of random number to be generated (default 4)
- * @return {number} : generated random number
- */
 function randomNumber (length = 4) {
   const numbers = '12345678901234567890';
   let result = '';
@@ -33,23 +19,11 @@ function randomNumber (length = 4) {
   return result;
 };
 
-/**
- * replaceAll: find and replace all occurrence of a string in a searched string
- * @param {string} string  : string to be replace
- * @param {string} search  : string which you want to replace
- * @param {string} replace : string with which you want to replace a string
- * @return {string} : replaced new string
- */
+
 function replaceAll (string, search, replace) { 
   return string.split(search).join(replace); 
 }
 
-/**
- * uniqueValidation: check unique validation while user registration
- * @param {Object} model : mongoose model instance of collection
- * @param {Object} data : data, coming from request
- * @return {boolean} : validation status
- */
 async function uniqueValidation (Model,data){
   let filter = { $or:[] };
   if (data && data['username']){
@@ -73,12 +47,7 @@ async function uniqueValidation (Model,data){
   return true;
 }
 
-/**
- * getDifferenceOfTwoDatesInTime : get difference between two dates in time
- * @param {date} currentDate  : current date
- * @param {date} toDate  : future date
- * @return {string} : difference of two date in time
- */
+
 function getDifferenceOfTwoDatesInTime (currentDate,toDate){
   let hours = toDate.diff(currentDate,'hour');
   currentDate =  currentDate.add(hours, 'hour');
@@ -92,11 +61,7 @@ function getDifferenceOfTwoDatesInTime (currentDate,toDate){
   return `${minutes} minute and ${seconds} second`; 
 }
 
-/** 
- * getRoleAccessData: returns role access of User
- * @param {objectId} userId : id of user to find role data
- * @return {Object} : role access for APIs of model
- */
+
 async function getRoleAccessData (userId) {
   let userRole = await dbService.findMany(UserRole, { userId: userId },{ pagination:false });
   let routeRole = await dbService.findMany(RouteRole, { roleId: { $in: userRole.data ? userRole.data.map(u=>u.roleId) : [] } },{

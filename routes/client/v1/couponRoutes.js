@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const ReferralController = require("../../../controller/client/v1/referralController");
+const couponController = require("../../../controller/client/v1/couponControllers");
 const { PLATFORM } = require("../../../constants/authConstant");
 const authenticateJWT = require("../../../middleware/loginUser");
 
-router.get(
-  "/referral/user",
+router.post(
+  "/client/coupon/apply",
   authenticateJWT(PLATFORM.CLIENT),
-  ReferralController.getAllReferralsofUser
+  couponController.applyCoupon
 );
+
 module.exports = router;

@@ -10,16 +10,6 @@ router.post(
   couponController.addCoupon
 );
 
-router.post("/seller/coupon/apply", couponController.applyCoupon);
-
-router.get(
-  "/seller/coupon/list",
-  authenticateJWT(PLATFORM.DEVICE),
-  couponController.findAllCoupons
-);
-
-router.get("/seller/coupon/count", couponController.getCouponCount);
-
 router.get(
   "/seller/coupon/all/list",
   authenticateJWT(PLATFORM.DEVICE),

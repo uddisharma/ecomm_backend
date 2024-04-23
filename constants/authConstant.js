@@ -1,7 +1,3 @@
-/**
- * authConstant.js
- * @description :: constants used in authentication
- */
 
 const JWT = {
   ADMIN_SECRET: "myjwtadminsecret",

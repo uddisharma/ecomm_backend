@@ -10,12 +10,6 @@ router.post(
   couponController.addCoupon
 );
 
-router.post("/admin/coupon/apply", couponController.applyCoupon);
-
-router.get("/admin/coupon/list", couponController.findAllCoupons);
-
-router.get("/admin/coupon/count", couponController.getCouponCount);
-
 router.get(
   "/admin/seller/coupon/list/:seller",
   authenticateJWT(PLATFORM.ADMIN),

@@ -1,18 +1,18 @@
-/**
- * auth.js
- * @description :: routes of authentication APIs
- */
+const express = require("express");
+const router = express.Router();
+const authController = require("../../../controller/seller/v1/authController");
+const rateLimit = require("express-rate-limit");
 
-const express =  require('express');
-const router  =  express.Router();
-const auth = require('../../../middleware/auth');
-const authController =  require('../../../controller/seller/v1/authController');
-const { PLATFORM } =  require('../../../constants/authConstant');   
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
 
-router.route('/register').post(authController.register);
-router.post('/login',authController.login);
-router.route('/forgot-password').post(authController.forgotPassword);
-router.route('/validate-otp').post(authController.validateResetPasswordOtp);
-router.route('/reset-password').put(authController.resetPassword);
-router.route('/logout').post(auth(PLATFORM.DEVICE), authController.logout);
+router.route("/register").post(limiter, authController.register);
+router.post("/login", limiter, authController.login);
+router.route("/forgot-password").post(limiter, authController.forgotPassword);
+router.route("/reset-password").put(limiter, authController.resetPassword);
+
 module.exports = router;

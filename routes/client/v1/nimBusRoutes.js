@@ -2,61 +2,47 @@ const express = require("express");
 const router = express.Router();
 const nimBusController = require("../../../controller/client/v1/nimBusController");
 const { PLATFORM } = require("../../../constants/authConstant");
-const auth = require("../../../middleware/auth");
-const checkRolePermission = require("../../../middleware/checkRolePermission");
+const authenticateJWT = require("../../../middleware/loginUser");
 
 router.route("/client/nimbus/login").post(nimBusController.Login);
 
 router
   .route("/client/nimbus/create-shipment")
-  .post(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    nimBusController.CancelShipment
-  );
+  .post(authenticateJWT(PLATFORM.CLIENT), nimBusController.CancelShipment);
 
-router
-  .route("/client/nimbus/track-order")
-  .post(auth(PLATFORM.ADMIN), checkRolePermission, nimBusController.TrackOrder);
+router.route("/client/nimbus/track-order").post(
+  authenticateJWT(PLATFORM.CLIENT),
+
+  nimBusController.TrackOrder
+);
 
 router
   .route("/client/nimbus/track-bulk-orders")
-  .post(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    nimBusController.TrackBulkOrders
-  );
+  .post(authenticateJWT(PLATFORM.CLIENT), nimBusController.TrackBulkOrders);
 
-router
-  .route("/client/nimbus/manifest")
-  .post(auth(PLATFORM.ADMIN), checkRolePermission, nimBusController.Manifest);
+router.route("/client/nimbus/manifest").post(
+  authenticateJWT(PLATFORM.CLIENT),
+
+  nimBusController.Manifest
+);
 
 router
   .route("/client/nimbus/cancel-shipment")
-  .post(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
-    nimBusController.CancelShipment
-  );
+  .post(authenticateJWT(PLATFORM.CLIENT), nimBusController.CancelShipment);
 
 router
   .route("/client/nimbus/create-hyper-local-shipment")
   .post(
-    auth(PLATFORM.ADMIN),
-    checkRolePermission,
+    authenticateJWT(PLATFORM.CLIENT),
     nimBusController.CreateHyperLocalShipment
   );
 
-router.route("/client/nimbus/check-service").post(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  nimBusController.CheckServiceAndRate
-);
+router
+  .route("/client/nimbus/check-service")
+  .post(authenticateJWT(PLATFORM.CLIENT), nimBusController.CheckServiceAndRate);
 
-router.route("/client/nimbus/check-service-rates").post(
-  // auth(PLATFORM.ADMIN),
-  // checkRolePermission,
-  nimBusController.getDeliveryRates
-);
+router
+  .route("/client/nimbus/check-service-rates")
+  .post(authenticateJWT(PLATFORM.CLIENT), nimBusController.getDeliveryRates);
 
 module.exports = router;

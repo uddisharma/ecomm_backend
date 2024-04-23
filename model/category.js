@@ -1,8 +1,3 @@
-/**
- * category.js
- * @description :: model of a database collection category
- */
-
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 let idValidator = require("mongoose-id-validator");

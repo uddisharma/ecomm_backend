@@ -1,7 +1,3 @@
-/**
- * emailService.js
- * @description :: exports function used in sending mails using mailgun provider
- */
 
 const nodemailer = require("nodemailer");
 const ejs = require("ejs");

@@ -7,14 +7,14 @@ const sharp = require("sharp");
 const randomname = (length) => crypto.randomBytes(length).toString("hex");
 
 let allowedFileTypes = ["png", "jpeg", "jpg", "gif", "pdf", "doc", "docx"];
-let maxFileSize = 5; //In Megabyte
+let maxFileSize = 5;
 
 const upload = async (req, res) => {
   try {
     const options = {
       multiples: true,
-      maxFileSize: 300 * 1024 * 1024, //300 MB
-      maxFieldsSize: 100 * 1024 * 1024, //50 MB
+      maxFileSize: 300 * 1024 * 1024,
+      maxFieldsSize: 100 * 1024 * 1024,
     };
     const form = new formidable.IncomingForm(options);
 
@@ -103,7 +103,6 @@ const uploadFiles = async (file, fields, fileCount) => {
     };
   }
 
-  // Check File Size
   const fileSize = file.size / 1024 / 1024;
   if (maxFileSize < fileSize) {
     return {

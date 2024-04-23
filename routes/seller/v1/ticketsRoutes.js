@@ -30,10 +30,10 @@ router
 
 router
   .route("/seller/vi/seller/delete/ticket/:ticketId")
-  .delete(ticketController.deleteTicket);
+  .delete(authenticateJWT(PLATFORM.DEVICE), ticketController.deleteTicket);
 
 router
   .route("/seller/vi/seller/update/ticket/:id")
-  .patch(ticketController.updateTicket);
+  .patch(authenticateJWT(PLATFORM.DEVICE), ticketController.updateTicket);
 
 module.exports = router;

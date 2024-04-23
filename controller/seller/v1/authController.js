@@ -1,6 +1,5 @@
 const User = require("../../../model/seller");
 const dbService = require("../../../utils/dbService");
-const userTokens = require("../../../model/userTokens");
 const dayjs = require("dayjs");
 const userSchemaKey = require("../../../utils/validation/userValidation");
 const validation = require("../../../utils/validateRequest");
@@ -85,7 +84,9 @@ const login = async (req, res) => {
     if (req.body.includeRoleAccess) {
       roleAccess = req.body.includeRoleAccess;
     }
-    const user = await User.findOne({ email: req.body.username }).populate({
+    const user = await User.findOne({
+      email: req.body.username,
+    }).populate({
       path: "sellingCategory.category",
       select: ["-createdAt", "-updatedAt"],
       populate: {
@@ -97,9 +98,11 @@ const login = async (req, res) => {
         },
       },
     });
+    if (!user?.isOnboarded) {
+      return res.json({ message: "onboardingpending" });
+    }
     if (user) {
-      // const matched = bcrypt.compareSync(password, user.password);
-      const matched = user.password == password;
+      const matched = await user.isPasswordMatch(password);
       if (matched) {
         const userData = user.toJSON();
         const token = await generateToken(
@@ -123,7 +126,6 @@ const login = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   const params = req.body;
-  // return res.send(req.body);
   try {
     if (!params.email) {
       return res.badRequest({
@@ -133,7 +135,6 @@ const forgotPassword = async (req, res) => {
     let where = { email: params.email };
     where.isActive = true;
     where.isDeleted = false;
-    // params.email = params.email.toString().toLowerCase();
     let found = await User.findOne({ email: req.body.email });
 
     if (!found) {
@@ -159,38 +160,8 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-const validateResetPasswordOtp = async (req, res) => {
-  const params = req.body;
-  try {
-    if (!params.otp) {
-      return res.badRequest({
-        message: "Insufficient request parameters! otp is required.",
-      });
-    }
-    const where = {
-      "resetPasswordLink.code": params.otp,
-      isActive: true,
-      isDeleted: false,
-    };
-    let found = await dbService.findOne(User, where);
-    if (!found || !found.resetPasswordLink.expireTime) {
-      return res.failure({ message: "Invalid OTP" });
-    }
-    if (dayjs(new Date()).isAfter(dayjs(found.resetPasswordLink.expireTime))) {
-      return res.failure({
-        message: "Your reset password link is expired or invalid",
-      });
-    }
-    await dbService.updateOne(User, found.id, { resetPasswordLink: {} });
-    return res.success({ message: "OTP verified" });
-  } catch (error) {
-    return res.internalServerError({ data: error.message });
-  }
-};
-
 const resetPassword = async (req, res) => {
   const params = req.body;
-  // return res.send(params);
   try {
     if (!params.code || !params.newPassword) {
       return res.badRequest({
@@ -203,7 +174,6 @@ const resetPassword = async (req, res) => {
       isActive: true,
       isDeleted: false,
     };
-    // let found = await dbService.findOne(User, where);
     let found = await User?.findOne({
       "resetPasswordLink.code": params?.code,
     });
@@ -225,29 +195,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const logout = async (req, res) => {
-  try {
-    let userToken = await dbService.findOne(userTokens, {
-      token: req.headers.authorization.replace("Bearer ", ""),
-      userId: req.user.id,
-    });
-    let updatedDocument = { isTokenExpired: true };
-    await dbService.updateOne(
-      userTokens,
-      { _id: userToken.id },
-      updatedDocument
-    );
-    return res.success({ message: "Logged Out Successfully" });
-  } catch (error) {
-    return res.internalServerError({ data: error.message });
-  }
-};
-
 module.exports = {
   register,
   login,
   forgotPassword,
-  validateResetPasswordOtp,
   resetPassword,
-  logout,
 };

@@ -225,54 +225,6 @@ const createOrder = async (req, res) => {
     ],
   };
 
-  // const data = {
-  //   format: "json",
-  //   shipments: [
-  //     {
-  //       name: "Deepak Sharma",
-  //       add: "95/VPO Nidani",
-  //       pin: "126102",
-  //       city: "Jind",
-  //       state: "Haryana",
-  //       country: "India",
-  //       phone: "7355810933",
-  //       order: "ABC123456",
-  //       payment_mode: "Prepaid",
-  //       return_pin: "133001",
-  //       return_city: "Kalka",
-  //       return_phone: "7015376457",
-  //       return_add: "Railway Colony Kalak",
-  //       return_state: "Haryana",
-  //       return_country: "India",
-  //       products_desc: "2*Nike Airforce Shoes",
-  //       hsn_code: "1234567890",
-  //       cod_amount: "2000",
-  //       order_date: "2023-11-24T18:30:00.000Z",
-  //       total_amount: "2000",
-  //       seller_add: "Bhatnagar Colony Jind",
-  //       seller_name: "Kamal Sharma",
-  //       seller_inv: "0987654321",
-  //       quantity: "2",
-  //       waybill: "",
-  //       shipment_width: "250",
-  //       shipment_height: "250",
-  //       weight: "1000",
-  //       seller_gst_tin: "u85300hr2021ptc096788",
-  //       shipping_mode: "Surface",
-  //       address_type: "home",
-  //       end_date: "2023-12-28T18:30:00.000Z",
-  //     },
-  //   ],
-  //   pickup_location: {
-  //     name: "India",
-  //     add: "VPO Nidani",
-  //     city: "Jind",
-  //     pin_code: 126102,
-  //     country: "India",
-  //     phone: "7015713717",
-  //   },
-  // };
-
   axios
     .post(apiUrl, data, { headers })
     .then((response) => {

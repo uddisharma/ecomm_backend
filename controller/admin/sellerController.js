@@ -1,23 +1,19 @@
-/**
- * userController.js
- * @description : exports action methods for user.
- */
-
 const Seller = require("../../model/seller");
 const Referral = require("../../model/refferrals");
+const User = require("../../model/user");
+const Banner = require("../../model/banner");
 const userSchemaKey = require("../../utils/validation/userValidation");
 const validation = require("../../utils/validateRequest");
 const dbService = require("../../utils/dbService");
-const ObjectId = require("mongodb").ObjectId;
-const auth = require("../../services/auth");
 const deleteDependentService = require("../../utils/deleteDependent");
-const utils = require("../../utils/common");
-const category = require("../../model/category");
 const Referral_Amount = require("../../constants/referral");
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({
+  stdTTL: 600,
+});
 
 function ValidateSeller(data) {
   const errors = [];
-
   if (!data.shopname) errors.push("Shop Name is required");
   if (!data.username) errors.push("Username is required");
   if (!data.cover) errors.push("Cover is required");
@@ -96,6 +92,9 @@ function ValidateSeller(data) {
         errors.push("City is required in Owner Address Details");
       if (!data.owner.address.state)
         errors.push("State is required in Owner Address Details");
+      if (!data.owner.signature) {
+        errors.push("Signature is required in Owner Details");
+      }
     }
   }
 
@@ -263,7 +262,8 @@ function ValidateSeller(data) {
 
 const addSeller = async (req, res) => {
   try {
-    let dataToCreate = { ...(req.body || {}) };
+    let dataToCreate = { ...({ ...req.body } || {}) };
+
     let validateRequest = validation.validateParamsWithJoi(
       dataToCreate,
       userSchemaKey.schemaKeys
@@ -273,60 +273,56 @@ const addSeller = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
+    const { referral_code } = dataToCreate;
 
+    let exist = await Seller.findOne({ email: req.body?.email });
+
+    if (exist) {
+      return res.json({
+        data: { status: "EXIST", message: "Seller already exists." },
+      });
+    }
+
+    if (!exist) {
+      let username = await Seller.findOne({ username: req.body?.username });
+      if (username) {
+        return res.json({
+          data: { status: "USERNAME", message: "Username already taken !" },
+        });
+      }
+    }
+
+    let checkReferralCode;
+    if (referral_code) {
+      checkReferralCode = await User.findOne({
+        referralCode: referral_code,
+      });
+      checkReferralCode = checkReferralCode?._id;
+    }
+    if (checkReferralCode) {
+      dataToCreate.referredBy = checkReferralCode;
+    }
     dataToCreate = new Seller(dataToCreate);
+
     let createdUser = await dbService.create(Seller, dataToCreate);
+
+    const findReferral = await Referral.findOne({
+      referredSeller: createdUser?._id,
+      referringUser: checkReferralCode,
+    });
+
+    if (!findReferral) {
+      const newReferral = new Referral({
+        referredSeller: createdUser?._id,
+        referringUser: checkReferralCode,
+      });
+      await newReferral.save();
+      // myCache.del("getAllReferralsofUseradmin");
+      // myCache.del("getAllReferralsadmin");
+      // myCache.del("userreferralsclient");
+    }
+
     return res.success({ data: createdUser });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const getSellerDetailsForCheckOut = async (req, res) => {
-  try {
-    const seller = await Seller.findOne({
-      username: req.params.username,
-    }).select("deliverypartner shopaddress");
-    return res.success({ data: { seller } });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const bulkInsertSellers = async (req, res) => {
-  try {
-    if (
-      req.body &&
-      (!Array.isArray(req.body.data) || req.body.data.length < 1)
-    ) {
-      return res.badRequest();
-    }
-    let dataToCreate = [...req.body.data];
-    for (let i = 0; i < dataToCreate.length; i++) {
-      dataToCreate[i] = {
-        ...dataToCreate[i],
-      };
-    }
-    let createdSellers = await dbService.create(Seller, dataToCreate);
-    createdSellers = { count: createdSellers ? createdSellers.length : 0 };
-    return res.success({ data: { count: createdSellers.count || 0 } });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const getLoggedInSellerInfo = async (req, res) => {
-  try {
-    const query = {
-      _id: req.seller.id,
-      isDeleted: false,
-    };
-    query.isActive = true;
-    let foundSeller = await dbService.findOne(Seller, query);
-    if (!foundSeller) {
-      return res.recordNotFound();
-    }
-    return res.success({ data: foundSeller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -346,13 +342,19 @@ const findAllSellers = async (req, res) => {
         "-charge",
       ],
     };
-    let query = { isDeleted: false };
+    let query = { isDeleted: false, isOnboarded: true };
+    // const chachedseller = myCache.get("findAllSellersadmin");
 
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
       return res.recordNotFound();
     }
+    // myCache.set("findAllSellersadmin", JSON.stringify(foundSellers), 21600);
     return res.success({ data: foundSellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -368,11 +370,23 @@ const findAllSellersWithPendingOnboarding = async (req, res) => {
       sort: "-createdAt",
     };
     let query = { isDeleted: false, isOnboarded: false };
+
+    // const chachedseller = myCache.get("findAllSellersWithPendingOnboarding");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
       return res.recordNotFound();
     }
+    // myCache.set(
+    //   "findAllSellersWithPendingOnboarding",
+    //   JSON.stringify(foundSellers),
+    //   21600
+    // );
     return res.success({ data: foundSellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -388,11 +402,23 @@ const findAllSellersWithDeleted = async (req, res) => {
       sort: "-createdAt",
     };
     let query = { isDeleted: true };
+
+    // const chachedseller = myCache.get("findAllSellersWithDeleted");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     let foundSellers = await dbService.paginate(Seller, query, options);
     if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
       return res.recordNotFound();
     }
+    // myCache.set(
+    //   "findAllSellersWithDeleted",
+    //   JSON.stringify(foundSellers),
+    //   21600
+    // );
     return res.success({ data: foundSellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -401,6 +427,11 @@ const findAllSellersWithDeleted = async (req, res) => {
 const findSingleSeller = async (req, res) => {
   const searchTerm = req.query.term;
   try {
+    // const chachedseller = myCache.get("findSingleSelleradmin");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     const sellers = await Seller.find({
       $or: [
         { shopname: { $regex: searchTerm, $options: "i" } },
@@ -411,7 +442,9 @@ const findSingleSeller = async (req, res) => {
     if (sellers?.length <= 0) {
       return res.recordNotFound();
     }
+    // myCache.set("findSingleSelleradmin", JSON.stringify(sellers), 21600);
     return res.success({ data: sellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -421,6 +454,11 @@ const findSingleSellerWithPendingOnboarding = async (req, res) => {
   const searchTerm = req.query.term;
 
   try {
+    // const chachedseller = myCache.get("findSingleSellerWithPendingOnboarding");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     const sellers = await Seller.find({
       $or: [
         { shopname: { $regex: searchTerm, $options: "i" } },
@@ -432,7 +470,13 @@ const findSingleSellerWithPendingOnboarding = async (req, res) => {
     if (sellers?.length <= 0) {
       return res.recordNotFound();
     }
+    // myCache.set(
+    //   "findSingleSellerWithPendingOnboarding",
+    //   JSON.stringify(sellers),
+    //   21600
+    // );
     return res.success({ data: sellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -442,6 +486,11 @@ const findSingleSellerWithdeleted = async (req, res) => {
   const searchTerm = req.query.term;
 
   try {
+    // const chachedseller = myCache.get("findSingleSellerWithdeleted");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     const sellers = await Seller.find({
       $or: [
         { shopname: { $regex: searchTerm, $options: "i" } },
@@ -452,34 +501,13 @@ const findSingleSellerWithdeleted = async (req, res) => {
     if (sellers?.length <= 0) {
       return res.recordNotFound();
     }
+    // myCache.set(
+    //   "findSingleSellerWithdeleted",
+    //   JSON.stringify(sellers),
+    //   21600
+    // );
     return res.success({ data: sellers });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const findAllSellersWithCategory = async (req, res) => {
-  try {
-    let options = {
-      page: Number(req.query.page),
-      limit: Number(req.query.limit),
-      skip: (Number(req.query.page) - 1) * Number(req.query.limit),
-      select: ["-legal", "-deliverypartner", "-resetPasswordLink", "-owner"],
-    };
-
-    let categoryId = req.params.category;
-    let query = categoryId
-      ? {
-          "sellingCategory.category": categoryId,
-        }
-      : {};
-
-    let foundSellers = await dbService.paginate(Seller, query, options);
-    if (!foundSellers || !foundSellers.data || !foundSellers.data.length) {
-      return res.recordNotFound();
-    }
-
-    return res.success({ data: foundSellers });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -487,6 +515,11 @@ const findAllSellersWithCategory = async (req, res) => {
 
 const getSellingCategoryofSeller = async (req, res) => {
   try {
+    // const chachedseller = myCache.get("getSellingCategoryofSelleradmin");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     const seller = await Seller.findById(req.params?.seller)
       .select("sellingCategory")
       .populate({
@@ -499,28 +532,20 @@ const getSellingCategoryofSeller = async (req, res) => {
         },
       });
 
-    // Check if seller or selling category was found
     if (!seller || !seller.sellingCategory) {
-      return res.notFound({ message: "Seller or selling category not found" });
+      return res.notFound({
+        message: "Seller or selling category not found",
+      });
     }
-
-    // Return the seller data with populated and nested parent category name
+    // myCache.set(
+    //   "getSellingCategoryofSelleradmin",
+    //   JSON.stringify(seller),
+    //   21600
+    // );
     return res.success({ data: seller });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
-  }
-};
-
-const findAllSellersForSearch = async (req, res) => {
-  try {
-    const data = await Seller.find().select("shopname username");
-    if (data) {
-      res.send(data);
-    } else {
-      res.send("no data found");
-    }
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -570,6 +595,21 @@ const deleteCategory = async (req, res) => {
       },
     });
 
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
+
     return res.success({ data: seller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -581,6 +621,11 @@ const getSeller = async (req, res) => {
     if (req.body.includeRoleAccess) {
       roleAccess = req.body.includeRoleAccess;
     }
+    // const chachedseller = myCache.get("getSelleradmin");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     const user = await Seller.findById(req.params.id)
       .populate({
         path: "sellingCategory.category",
@@ -598,15 +643,16 @@ const getSeller = async (req, res) => {
         path: "referredBy",
         select: ["name", "email"],
       })
-
       .select("-resetPasswordLink -password");
     if (user) {
+      // myCache.set("getSelleradmin", JSON.stringify(user), 21600);
       return res.success({
         data: { user },
       });
     } else {
       return res.recordNotFound();
     }
+    // }
   } catch (error) {
     console.log(error);
     return res.internalServerError({ data: error.message });
@@ -626,8 +672,15 @@ const getSellerCount = async (req, res) => {
     if (typeof req.body.where === "object" && req.body.where !== null) {
       where = { ...req.body.where };
     }
+    // const chachedseller = myCache.get("getSellerCountadmin");
+
+    // if (chachedseller) {
+    //   return res.success({ data: JSON.parse(chachedseller) });
+    // } else {
     let countedUser = await dbService.count(Seller, where);
+    // myCache.set("getSellerCountadmin", JSON.stringify(countedUser), 21600);
     return res.success({ data: { count: countedUser } });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -649,55 +702,21 @@ const updateSeller = async (req, res) => {
     if (!updatedSeller) {
       return res.recordNotFound();
     }
-
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: updatedSeller });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const updateAllSellers = async (req, res) => {
-  try {
-    let updatedSeller = await Seller.updateMany(
-      { isActive: false },
-      { ...req.body },
-      {
-        new: true,
-      }
-    );
-    if (!updatedSeller) {
-      return res.recordNotFound();
-    }
-    return res.success({ data: updatedSeller });
-  } catch (error) {
-    return res.internalServerError({ message: error.message });
-  }
-};
-
-const bulkUpdateSeller = async (req, res) => {
-  try {
-    let filter = req.body && req.body.filter ? { ...req.body.filter } : {};
-    let dataToUpdate = {};
-    delete dataToUpdate["addedBy"];
-    if (
-      req.body &&
-      typeof req.body.data === "object" &&
-      req.body.data !== null
-    ) {
-      dataToUpdate = {
-        ...req.body.data,
-        updatedBy: req.user.id,
-      };
-    }
-    let updatedSeller = await dbService.updateMany(
-      Seller,
-      filter,
-      dataToUpdate
-    );
-    if (!updatedSeller) {
-      return res.recordNotFound();
-    }
-    return res.success({ data: { count: updatedSeller } });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -724,6 +743,20 @@ const deleteSeller = async (req, res) => {
     if (!deletedSeller) {
       return res.recordNotFound();
     }
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: deletedSeller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -733,6 +766,20 @@ const deleteSeller = async (req, res) => {
 const deleteSeller1 = async (req, res) => {
   try {
     await Seller.findByIdAndDelete(req.params.id);
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.json({ message: "Delete Successfully" });
   } catch (error) {
     return res.json({ message: "Something went wrong", error });
@@ -751,10 +798,7 @@ const updateSellerProfile = async (req, res) => {
         message: `Invalid values in parameters, ${validateRequest.message}`,
       });
     }
-    // delete data.createdAt;
-    // delete data.password;
-    // delete data.updatedAt;
-    // if (data.id) delete data.id;
+
     let result = await dbService.updateOne(
       Seller,
       { _id: req.params.id },
@@ -766,6 +810,20 @@ const updateSellerProfile = async (req, res) => {
     if (!result) {
       return res.recordNotFound();
     }
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: result, message: "Updated Successfully" });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -821,7 +879,20 @@ const addCategory = async (req, res) => {
         },
       },
     });
-
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: "success" });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -840,10 +911,21 @@ const finalOnboardSeller = async (req, res) => {
       return res.json({ valid, errors });
     }
 
+    const sellerBanners = await Banner.find({ sellerId: req.params.id });
+
+    if (sellerBanners?.length <= 0) {
+      return res.json({
+        valid: false,
+        errors: ["Please add atleast one banner"],
+      });
+    }
+
     let updatedSeller = await Seller.findByIdAndUpdate(
       req.params.id,
       {
         isOnboarded: true,
+        onboardAt: new Date(),
+        // createdAt: new Date(),
       },
       { new: true }
     );
@@ -867,7 +949,10 @@ const finalOnboardSeller = async (req, res) => {
             $set: {
               referredSeller: req.params.id,
               referringUser: updatedSeller?.referredBy,
-              amount: Referral_Amount,
+              amount:
+                findReferral?.amount > 0
+                  ? findReferral?.amount
+                  : Referral_Amount,
               onboarded: true,
             },
           },
@@ -885,9 +970,25 @@ const finalOnboardSeller = async (req, res) => {
           onboarded: true,
         });
         await newReferral.save();
+        // myCache.del("getAllReferralsofUseradmin");
+        // myCache.del("getAllReferralsadmin");
+        // myCache.del("userreferralsclient");
       }
     }
-
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: updatedSeller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -906,6 +1007,20 @@ const unOnboardSeller = async (req, res) => {
     if (!updatedSeller) {
       return res.recordNotFound();
     }
+    // myCache.del("findAllSellersWithCategoryClient");
+    // myCache.del("findAllSellersClient");
+    // myCache.del("getSellingCategoryofSellerClient");
+    // myCache.del("searchSellerclient");
+    // myCache.del("sellerByIdseller");
+    // myCache.del("findAllSellersadmin");
+    // myCache.del("findAllSellersWithPendingOnboarding");
+    // myCache.del("findAllSellersWithDeleted");
+    // myCache.del("findSingleSelleradmin");
+    // myCache.del("findSingleSellerWithPendingOnboarding");
+    // myCache.del("findSingleSellerWithdeleted");
+    // myCache.del("getSellingCategoryofSelleradmin");
+    // myCache.del("getSelleradmin");
+    // myCache.del("getSellerCountadmin");
     return res.success({ data: updatedSeller });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -915,23 +1030,16 @@ const unOnboardSeller = async (req, res) => {
 module.exports = {
   addSeller,
   findAllSellers,
-  findAllSellersForSearch,
-  getLoggedInSellerInfo,
-  bulkInsertSellers,
   getSeller,
   getSellerCount,
   updateSeller,
-  bulkUpdateSeller,
   deleteSeller1,
   updateSellerProfile,
-  findAllSellersWithCategory,
   getSellingCategoryofSeller,
-  getSellerDetailsForCheckOut,
   findSingleSeller,
   deleteCategory,
   findAllSellersWithPendingOnboarding,
   findSingleSellerWithPendingOnboarding,
-  updateAllSellers,
   findAllSellersWithDeleted,
   findSingleSellerWithdeleted,
   deleteSeller,

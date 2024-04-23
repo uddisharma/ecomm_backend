@@ -1,7 +1,3 @@
-/** 
- * smsService.js
- * @description :: exports function used in sending sms using gupshup provider
- */
 
 const axios = require('axios');
 const sendSMS = async (obj) => {

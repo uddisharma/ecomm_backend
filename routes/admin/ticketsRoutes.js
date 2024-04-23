@@ -34,7 +34,7 @@ router
 
 router
   .route("/admin/delete/ticket/:ticketId")
-  .delete(ticketController.deleteTicket);
+  .delete(authenticateJWT(PLATFORM.ADMIN), ticketController.deleteTicket);
 
 router
   .route("/admin/update/ticket/:id")

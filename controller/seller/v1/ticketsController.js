@@ -1,5 +1,9 @@
 const Tickets = require("../../../model/tickets");
 const dbService = require("../../../utils/dbService");
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({
+  stdTTL: 600,
+});
 
 exports.addTicket = async (req, res) => {
   try {
@@ -12,6 +16,8 @@ exports.addTicket = async (req, res) => {
       description,
     });
     await newTicket.save();
+    // myCache.del("getAllTicketsseller");
+    // myCache.del("getAllTickets1seller");
     return res.success({ data: newTicket });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -27,6 +33,8 @@ exports.updateTicket = async (req, res) => {
         new: true,
       }
     );
+    // myCache.del("getAllTicketsseller");
+    // myCache.del("getAllTickets1seller");
     return res.success({ data: updatedTicket });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -50,6 +58,8 @@ exports.ticketReply = async (req, res) => {
     if (!updatedTicket) {
       return res.recordNotFound();
     }
+    // myCache.del("getAllTicketsseller");
+    // myCache.del("getAllTickets1seller");
     return res.success({ data: updatedTicket });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -71,6 +81,8 @@ exports.markAsResolved = async (req, res) => {
     if (!updatedTicket) {
       return res.recordNotFound();
     }
+    // myCache.del("getAllTicketsseller");
+    // myCache.del("getAllTickets1seller");
     return res.success({ data: updatedTicket });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -100,6 +112,8 @@ exports.deleteTicket = async (req, res) => {
     if (!deletedTicket) {
       return res.recordNotFound();
     }
+    // myCache.del("getAllTicketsseller");
+    // myCache.del("getAllTickets1seller");
     return res.success({ data: deletedTicket });
   } catch (error) {
     return res.internalServerError({ message: error.query });
@@ -108,11 +122,19 @@ exports.deleteTicket = async (req, res) => {
 
 exports.getAllTickets = async (req, res) => {
   try {
+    // const chachedtickets = myCache.get("getAllTicketsseller");
+
+    // if (chachedtickets) {
+    //   return res.success({ data: JSON.parse(chachedtickets) });
+    // } else {
     const tickets = await Tickets.find().populate({
       path: "seller",
       select: ["shopname", "username", "email"],
     });
+
+    // myCache.set("getAllTicketsseller", JSON.stringify(tickets), 500);
     return res.success({ data: tickets });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.query });
   }
@@ -133,12 +155,18 @@ exports.getSellerTickets = async (req, res) => {
       isDeleted: req.query.isDeleted,
     };
 
+    // const chachedtickets = myCache.get("getAllTickets1seller");
+
+    // if (chachedtickets) {
+    //   return res.success({ data: JSON.parse(chachedtickets) });
+    // }
+
     let foundProducts = await dbService.paginate(Tickets, query, options);
 
     if (!foundProducts || !foundProducts.data || !foundProducts.data.length) {
       return res.recordNotFound();
     }
-
+    // myCache.set("getAllTickets1seller", JSON.stringify(foundProducts), 500);
     return res.success({ data: foundProducts });
   } catch (error) {
     return res.internalServerError({ message: error.message });

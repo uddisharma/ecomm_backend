@@ -1,28 +1,14 @@
-/**
- * authController.js
- * @description :: exports authentication methods
- */
-
 const User = require("../../../model/user");
 const dbService = require("../../../utils/dbService");
-const userTokens = require("../../../model/userTokens");
 const dayjs = require("dayjs");
 const userSchemaKey = require("../../../utils/validation/userValidation");
 const validation = require("../../../utils/validateRequest");
 const authConstant = require("../../../constants/authConstant");
 const authService = require("../../../services/auth");
-const common = require("../../../utils/common");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const CryptoJS = require("crypto-js");
 const { JWT } = require("../../../constants/authConstant");
-const { generateReferralCode } = require("../../../services/referrals");
-/**
- * @description : user registration
- * @param {Object} req : request for register
- * @param {Object} res : response for register
- * @return {Object} : response for register {status, message, data}
- */
+const bcrypt = require("bcrypt");
 
 const generateToken = async (user, secret) => {
   return jwt.sign(
@@ -47,11 +33,6 @@ const register = async (req, res) => {
       });
     }
 
-    // let isEmptyPassword = false;
-    // if (!req.body.password) {
-    //   isEmptyPassword = true;
-    //   req.body.password = Math.random().toString(36).slice(2);
-    // }
     function generateReferralCode1(name, email, phoneNumber) {
       const userString = `${name}${email}${phoneNumber}`;
 
@@ -80,30 +61,13 @@ const register = async (req, res) => {
       });
     }
     const result = await dbService.create(User, data);
-    // if (isEmptyPassword && req.body.email){
-    //   await authService.sendPasswordByEmail({
-    //     email: req.body.email,
-    //     password: req.body.password
-    //   });
-    // }
-    // if (isEmptyPassword && req.body.mobileNo){
-    //   await authService.sendPasswordBySMS({
-    //     mobileNo: req.body.mobileNo,
-    //     password: req.body.password
-    //   });
-    // }
+
     return res.success({ data: result });
   } catch (error) {
     return res.internalServerError({ data: error.message });
   }
 };
 
-/**
- * @description : login with username and password
- * @param {Object} req : request for login
- * @param {Object} res : response for login
- * @return {Object} : response for login {status, message, data}
- */
 const login = async (req, res) => {
   try {
     let { username, password } = req.body;
@@ -118,15 +82,6 @@ const login = async (req, res) => {
     if (req.body.includeRoleAccess) {
       roleAccess = req.body.includeRoleAccess;
     }
-    // let result = await authService.loginUser(
-    //   username,
-    //   password,
-    //   authConstant.PLATFORM.CLIENT,
-    //   roleAccess
-    // );
-    // if (result.flag) {
-    //   return res.badRequest({ message: result.data });
-    // }
 
     const user = await User.findOne({ email: req.body.username }).select([
       "-loginRetryLimit",
@@ -134,10 +89,11 @@ const login = async (req, res) => {
       "-resetPasswordLink",
       "-userType",
     ]);
-
+    if (user?.isDeleted) {
+      return res.json({ message: "blocked" });
+    }
     if (user) {
-      // const matched = bcrypt.compareSync(password, user.password);
-      const matched = user.password == password;
+      const matched = await user.isPasswordMatch(password);
       if (matched) {
         const userData = user.toJSON();
         const token = await generateToken(
@@ -149,7 +105,7 @@ const login = async (req, res) => {
           message: "Login Successful",
         });
       } else {
-        res.json({ message: "wrong password", user });
+        res.json({ message: "wrong password" });
       }
     } else {
       res.json({ message: "user not found" });
@@ -159,12 +115,6 @@ const login = async (req, res) => {
   }
 };
 
-/**
- * @description : send email or sms to user with OTP on forgot password
- * @param {Object} req : request for forgotPassword
- * @param {Object} res : response for forgotPassword
- * @return {Object} : response for forgotPassword {status, message, data}
- */
 const forgotPassword = async (req, res) => {
   const params = req.body;
   try {
@@ -201,47 +151,6 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-/**
- * @description : validate OTP
- * @param {Object} req : request for validateResetPasswordOtp
- * @param {Object} res : response for validateResetPasswordOtp
- * @return {Object} : response for validateResetPasswordOtp  {status, message, data}
- */
-const validateResetPasswordOtp = async (req, res) => {
-  const params = req.body;
-  try {
-    if (!params.otp) {
-      return res.badRequest({
-        message: "Insufficient request parameters! otp is required.",
-      });
-    }
-    const where = {
-      "resetPasswordLink.code": params.otp,
-      isActive: true,
-      isDeleted: false,
-    };
-    let found = await dbService.findOne(User, where);
-    if (!found || !found.resetPasswordLink.expireTime) {
-      return res.failure({ message: "Invalid OTP" });
-    }
-    if (dayjs(new Date()).isAfter(dayjs(found.resetPasswordLink.expireTime))) {
-      return res.failure({
-        message: "Your reset password link is expired or invalid",
-      });
-    }
-    await dbService.updateOne(User, found.id, { resetPasswordLink: {} });
-    return res.success({ message: "OTP verified" });
-  } catch (error) {
-    return res.internalServerError({ data: error.message });
-  }
-};
-
-/**
- * @description : reset password with code and new password
- * @param {Object} req : request for resetPassword
- * @param {Object} res : response for resetPassword
- * @return {Object} : response for resetPassword {status, message, data}
- */
 const resetPassword = async (req, res) => {
   const params = req.body;
   try {
@@ -276,35 +185,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
-/**
- * @description : logout user
- * @param {Object} req : request for logout
- * @param {Object} res : response for logout
- * @return {Object} : response for logout {status, message, data}
- */
-const logout = async (req, res) => {
-  try {
-    let userToken = await dbService.findOne(userTokens, {
-      token: req.headers.authorization.replace("Bearer ", ""),
-      userId: req.user.id,
-    });
-    let updatedDocument = { isTokenExpired: true };
-    await dbService.updateOne(
-      userTokens,
-      { _id: userToken.id },
-      updatedDocument
-    );
-    return res.success({ message: "Logged Out Successfully" });
-  } catch (error) {
-    return res.internalServerError({ data: error.message });
-  }
-};
-
 module.exports = {
   register,
   login,
   forgotPassword,
-  validateResetPasswordOtp,
   resetPassword,
-  logout,
 };

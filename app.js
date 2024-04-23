@@ -1,30 +1,38 @@
-/**
- * app.js
- * Use `app.js` to run your app.
- * To start the server, run: `node app.js`.
- */
-
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const dotenv = require("dotenv");
-dotenv.config({ path: ".env" });
-global.__basedir = __dirname;
 const postmanToOpenApi = require("postman-to-openapi");
 const YAML = require("yamljs");
-const si = require("systeminformation");
 const swaggerUi = require("swagger-ui-express");
-const FormData = require("form-data");
 require("./config/db");
 const passport = require("passport");
+require("./jobs/index");
+dotenv.config({ path: ".env" });
+global.__basedir = __dirname;
 
 let logger = require("morgan");
 const { adminPassportStrategy } = require("./config/adminPassportStrategy");
 const { devicePassportStrategy } = require("./config/devicePassportStrategy");
 const { clientPassportStrategy } = require("./config/clientPassportStrategy");
+const rateLimit = require("express-rate-limit");
+const Order = require("./model/order");
+
 const app = express();
+
+//cors
 const corsOptions = { origin: process.env.ALLOW_ORIGIN };
 app.use(cors(corsOptions));
+
+//rate limiting
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 
 //template engine
 app.set("view engine", "ejs");
@@ -62,32 +70,67 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-app.get("/system-info", async (req, res) => {
-  try {
-    const systemData = await si.system();
-    const osData = await si.osInfo();
-    const deviceInfo = {
-      osData,
-      systemData,
-    };
-    return res.send(deviceInfo);
-  } catch (error) {
-    res.send(error);
+app.post("/webhook",async (req, res) => {
+  const {
+    amount,
+    client_txn_id,
+    createdAt,
+    customer_vpa,
+    id,
+    remark,
+    status,
+    txnAt,
+    upi_txn_id,
+  } = req.body;
+  const payment = {
+    id: upi_txn_id,
+    method: "upi",
+    others: {
+      id,
+      client_txn_id,
+      customer_vpa,
+      amount,
+      status,
+      remark,
+      createdAt,
+      txnAt,
+    },
+  };
+  if (status) {
+    try {
+      const updatedOrder =await Order.findByIdAndUpdate(client_txn_id, {
+        payment: status,
+        paymentData: payment,
+      });
+      if (!updatedOrder) {
+        return res.recordNotFound();
+      }
+      return res.success({ data: "payment accpected" });
+    } catch (error) {
+      return res.internalServerError({ message: error.message });
+    }
+  } else {
+    try {
+      const updatedOrder =await Order.findByIdAndDelete(client_txn_id);
+      if (!updatedOrder) {
+        return res.recordNotFound();
+      }
+      return res.success({ data: "payment not done" });
+    } catch (error) {
+      return res.internalServerError({ message: error.message });
+    }
   }
 });
 
 //global catch
-
 app.use((err, req, res, next) => {
   return res.send("Somehting up with our server");
 });
 
-//get the order revenue of all the months
-
+//seeding and server starting
 if (process.env.NODE_ENV !== "test") {
   // const seeder = require("./seeders");
-  // const allRegisterRoutes = listEndpoints(app);
-  // seeder(allRegisterRoutes).then(() => {
+  // seeder().then(() => {
   //   console.log("Seeding done.");
   // });
 

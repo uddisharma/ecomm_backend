@@ -1,6 +1,4 @@
-/**
- * order.js
- */
+
 
 module.exports = {
   STATUS: {

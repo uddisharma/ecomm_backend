@@ -2,6 +2,10 @@ const Referral = require("../../model/refferrals");
 const Seller = require("../../model/seller");
 const User = require("../../model/user");
 const dbService = require("../../utils/dbService");
+const NodeCache = require("node-cache");
+const myCache = new NodeCache({
+  stdTTL: 600,
+});
 
 const createReferral = async (req, res) => {
   try {
@@ -27,13 +31,16 @@ const createReferral = async (req, res) => {
       status: status ?? false,
     });
     await referral.save();
+    // myCache.del("getAllReferralsofUseradmin");
+    // myCache.del("getAllReferralsadmin");
+    // myCache.del("userreferralsclient");
+
     return res.success({ data: referral });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
 };
 
-// Get all referrals
 const getAllReferrals = async (req, res) => {
   try {
     let options = {
@@ -49,12 +56,19 @@ const getAllReferrals = async (req, res) => {
     let query = {
       isDeleted: req.query.isDeleted,
     };
-    let referrals = await dbService.paginate(Referral, query, options);
 
+    // const chachedreferrals = myCache.get("getAllReferralsadmin");
+
+    // if (chachedreferrals) {
+    //   return res.success({ data: JSON.parse(chachedreferrals) });
+    // } else {
+    let referrals = await dbService.paginate(Referral, query, options);
     if (!referrals) {
       return res.recordNotFound();
     }
+    // myCache.set("getAllReferralsadmin", JSON.stringify(foundProducts), 21600);
     return res.success({ data: referrals });
+    // }
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
@@ -63,6 +77,10 @@ const getAllReferrals = async (req, res) => {
 const getAllReferralsofUser = async (req, res) => {
   try {
     const id = req.params.id;
+    // const chachedreferrals = myCache.get("getAllReferralsofUseradmin");
+    // if (chachedreferrals) {
+    //   return res.success({ data: JSON.parse(chachedreferrals) });
+    // }
     const referrals = await Referral.find({ referringUser: id }).populate({
       path: "referredSeller",
       select: ["shopname", "username"],
@@ -70,6 +88,7 @@ const getAllReferralsofUser = async (req, res) => {
     if (!referrals) {
       return res.recordNotFound();
     }
+    // myCache.set("getAllReferralsofUseradmin", JSON.stringify(referrals), 21600);
     return res.success({ data: referrals });
   } catch (error) {
     return res.internalServerError({ message: error.message });
@@ -90,7 +109,6 @@ const getReferralById = async (req, res) => {
   }
 };
 
-// Update a referral by ID
 const updateReferral = async (req, res) => {
   try {
     const referral = await Referral.findByIdAndUpdate(req.params.id, req.body, {
@@ -99,26 +117,30 @@ const updateReferral = async (req, res) => {
     if (!referral) {
       return res.recordNotFound();
     }
+    myCache.del("getAllReferralsofUseradmin");
+    myCache.del("getAllReferralsadmin");
+    myCache.del("userreferralsclient");
     return res.success({ data: referral });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
 };
 
-// Delete a referral by ID
 const deleteReferral = async (req, res) => {
   try {
     const referral = await Referral.findByIdAndDelete(req.params.id);
     if (!referral) {
       return res.recordNotFound();
     }
+    // myCache.del("getAllReferralsofUseradmin");
+    // myCache.del("getAllReferralsadmin");
+    // myCache.del("userreferralsclient");
     return res.success({ data: referral });
   } catch (error) {
     return res.internalServerError({ message: error.message });
   }
 };
 
-// Export the router
 module.exports = {
   createReferral,
   getAllReferrals,
