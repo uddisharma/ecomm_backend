@@ -124,7 +124,9 @@ app.post("/webhook",async (req, res) => {
 
 //global catch
 app.use((err, req, res, next) => {
+  
   return res.send("Somehting up with our server");
+
 });
 
 //seeding and server starting
