@@ -1,8 +1,13 @@
-FROM node:14.16.0 
+FROM node:20-alpine
 
-WORKDIR /home/node/app
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
 
 COPY . .
-RUN npm i
+
 EXPOSE 5000
+
 CMD ["npm", "start"]

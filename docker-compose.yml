@@ -1,34 +1,36 @@
-version: '3'
+version: '3.8'
+
 services:
-  node-app:
-    container_name: node-app
-    image: node
-    user: root
-    command: ["/bin/bash","-lc","npm i && npm start"]
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: uddisharma/thribute:latest
     ports:
-      - '5000:5000'
+      - "5000:5000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - backend_network
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGO_URI=mongodb://127.0.0.1:27017/EcomDb_test
     depends_on:
-      - mongodb
-    working_dir: /home/node/app
-    volumes:
-      - ./:/home/node/app
-      - ./.env.docker:/home/node/app/.env
-    networks:
-      - node-network
+      - mongo
 
-  mongodb:
-    container_name: mongodb
-    image: mongo
-    ports:
-      - '27019:27017'
+  mongo:
+    image: mongo:latest
+    container_name: mongo
     volumes:
-      - dbdata:/data/db
+      - mongo_data:/data/db
     networks:
-      - node-network
-
-volumes:
-  dbdata:
+      - backend_network
 
 networks:
-  node-network:
+  backend_network:
     driver: bridge
+
+volumes:
+  mongo_data:
