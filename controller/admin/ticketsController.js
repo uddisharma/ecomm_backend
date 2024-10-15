@@ -163,7 +163,7 @@ exports.getSingleTicket = async (req, res) => {
   try {
     const ticket = await Tickets.findById(req.params.id).populate({
       path: "seller",
-      select: "shopname email phone cover",
+      select: "shopname email phone cover username",
     });
     if (ticket) {
       return res.success({ data: ticket });

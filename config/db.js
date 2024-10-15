@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const uri = "mongodb://127.0.0.1:27017/EcomDb_test";
+const uri = "mongodb+srv://uddibhardwaj08:uddibhardwaj08@cluster0.7zyan.mongodb.net";
 mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
